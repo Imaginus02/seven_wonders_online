@@ -1,5 +1,6 @@
 package com.reynaud.wonders;
 
+import com.reynaud.wonders.controller.RegistrationController;
 import com.reynaud.wonders.dto.UserDTO;
 import com.reynaud.wonders.entity.UserEntity;
 import com.reynaud.wonders.service.UserService;

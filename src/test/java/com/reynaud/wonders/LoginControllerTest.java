@@ -2,6 +2,8 @@ package com.reynaud.wonders;
 
 import org.junit.jupiter.api.Test;
 
+import com.reynaud.wonders.controller.LoginController;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class LoginControllerTest {

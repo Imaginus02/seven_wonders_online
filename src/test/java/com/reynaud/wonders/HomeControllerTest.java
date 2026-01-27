@@ -2,6 +2,9 @@ package com.reynaud.wonders;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.ui.Model;
+
+import com.reynaud.wonders.controller.HomeController;
+
 import org.springframework.security.core.Authentication;
 
 import static org.junit.jupiter.api.Assertions.*;

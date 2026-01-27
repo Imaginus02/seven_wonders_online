@@ -40,6 +40,24 @@
         .logout-btn:hover {
             background-color: #da190b;
         }
+        .nav-links {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+        }
+        .nav-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+        }
+        .nav-link:hover {
+            background-color: #0b7dda;
+        }
     </style>
 </head>
 <body>
@@ -48,7 +66,11 @@
         <p class="welcome">Hello, <span th:text="${username}">User</span>!</p>
         <p>You have successfully logged in.</p>
         
-        <form th:action="@{/logout}" method="post">
+        <div class="nav-links">
+            <a href="/cards" class="nav-link">View Cards</a>
+        </div>
+        
+        <form th:action="@{/logout}" method="post" style="margin-top: 20px;">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <button type="submit" class="logout-btn">Logout</button>
         </form>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cards - 7 Wonders Online</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .back-link:hover {
+            background-color: #45a049;
+        }
+
+        /* Age container - outer box */
+        .age-section {
+            margin-bottom: 40px;
+            background-color: #2a2a2a;
+            border-left: 8px solid #FFD700;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .age-title {
+            color: #FFD700;
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        /* Card type container - medium box */
+        .type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .type-section {
+            background-color: #3a3a3a;
+            border-left: 4px solid;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Color-specific borders */
+        .type-section.BROWN { border-left-color: #8B6F47; }
+        .type-section.GREY { border-left-color: #A9A9A9; }
+        .type-section.BLUE { border-left-color: #4169E1; }
+        .type-section.GREEN { border-left-color: #228B22; }
+        .type-section.RED { border-left-color: #DC143C; }
+        .type-section.YELLOW { border-left-color: #FFD700; }
+        .type-section.VIOLET { border-left-color: #9370DB; }
+
+        .type-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            color: #fff;
+        }
+
+        .type-section.BROWN .type-title { color: #D2B48C; }
+        .type-section.GREY .type-title { color: #D3D3D3; }
+        .type-section.BLUE .type-title { color: #87CEEB; }
+        .type-section.GREEN .type-title { color: #90EE90; }
+        .type-section.RED .type-title { color: #FF6B6B; }
+        .type-section.YELLOW .type-title { color: #FFFF99; }
+        .type-section.VIOLET .type-title { color: #DA70D6; }
+
+        /* Individual card box - small box */
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card {
+            background-color: #4a4a4a;
+            border: 1px solid #666;
+            border-radius: 4px;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
+        }
+
+        .card-image {
+            width: 60px;
+            height: 80px;
+            background-color: #2a2a2a;
+            border: 1px solid #666;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .card-name {
+            font-weight: bold;
+            color: #fff;
+            font-size: 0.95em;
+            margin-bottom: 4px;
+        }
+
+        .card-details {
+            font-size: 0.85em;
+            color: #ccc;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .card-detail {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .cost-info {
+            background-color: #5a5a5a;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+
+        .min-players {
+            background-color: #5a5a5a;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+
+        /* Empty state */
+        .no-image {
+            background-color: #5a5a5a;
+            color: #999;
+            font-size: 0.8em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .type-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .age-title {
+                font-size: 1.4em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/home" class="back-link">← Back to Home</a>
+        
+        <h1>Cards of Seven Wonders</h1>
+
+        <!-- Iterate through Ages -->
+        <div th:each="ageEntry : ${cardsByAgeAndType}">
+            <div class="age-section">
+                <div class="age-title" th:text="${ageEntry.key}"></div>
+                
+                <!-- Iterate through Card Types (Colors) within this Age -->
+                <div class="type-grid">
+                    <div th:each="typeEntry : ${ageEntry.value}" 
+                         th:classappend="${typeEntry.key}"
+                         class="type-section">
+                        <div class="type-title" th:text="${typeEntry.key}"></div>
+                        
+                        <!-- Iterate through Cards within this Type -->
+                        <div class="cards-container">
+                            <div th:each="card : ${typeEntry.value}" class="card">
+                                <!-- Card Image -->
+                                <div class="card-image">
+                                    <div th:if="${card.image}" style="width: 100%; height: 100%;">
+                                        <img th:src="@{/assets/cards/{img}(img=${card.image})}" 
+                                             th:alt="${card.name}"
+                                             style="width: 100%; height: 100%; object-fit: cover;">
+                                    </div>
+                                    <div th:if="!${card.image}" class="no-image">No Image</div>
+                                </div>
+                                
+                                <!-- Card Info -->
+                                <div class="card-info">
+                                    <div class="card-name" th:text="${card.name}"></div>
+                                    <div class="card-details">
+                                        <div class="min-players" th:text="'👥 ' + ${card.minPlayerCount} + '+'"></div>
+                                        <div class="cost-info" th:if="${card.coinCost > 0}" 
+                                             th:text="'💰 ' + ${card.coinCost}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

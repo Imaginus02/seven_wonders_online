@@ -87,16 +87,16 @@ INSERT INTO cards (name, type, age, cost, coin_cost, min_player_count, incoming_
 
 
     -- Purple Guild Cards
-('Workers Guild', 'PURPLE', 'AGE_III', '{"ORE":2,"WOOD":1,"STONE":1,"BRICK":1}', 0, 3, '[]', '[]', 'workersguild.png'),
-('Craftsmens Guild', 'PURPLE', 'AGE_III', '{"STONE":2,"ORE":1}', 0, 3, '[]', '[]', 'craftsmensguild.png'),
-('Magistrates Guild', 'PURPLE', 'AGE_III', '{"WOOD":3,"STONE":1,"TEXTILE":1}', 0, 3, '[]', '[]', 'magistratesguild.png'),
-('Traders Guild', 'PURPLE', 'AGE_III', '{"TEXTILE":1,"GLASS":1,"PAPER":1}', 0, 3, '[]', '[]', 'tradersguild.png'),
-('Spies Guild', 'PURPLE', 'AGE_III', '{"BRICK":2,"GLASS":1}', 0, 3, '[]', '[]', 'spiesguild.png'),
-('Philosophers Guild', 'PURPLE', 'AGE_III', '{"BRICK":3,"TEXTILE":1,"PAPER":1}', 0, 3, '[]', '[]', 'philosophersguild.png'),
-('Shipowners Guild', 'PURPLE', 'AGE_III', '{"WOOD":3,"GLASS":1,"PAPER":1}', 0, 3, '[]', '[]', 'shipownersguild.png'),
-('Scientists Guild', 'PURPLE', 'AGE_III', '{"WOOD":2,"ORE":2,"PAPER":1}', 0, 3, '[]', '[]', 'scientistsguild.png'),
-('Decorators Guild', 'PURPLE', 'AGE_III', '{"ORE":2,"STONE":1,"TEXTILE":1}', 0, 3, '[]', '[]', NULL),
-('Builders Guild', 'PURPLE', 'AGE_III', '{"STONE":3,"BRICK":1,"GLASS":1}', 0, 3, '[]', '[]', 'buildersguild.png'),
+('Workers Guild', 'VIOLET', 'AGE_III', '{"ORE":2,"WOOD":1,"STONE":1,"BRICK":1}', 0, 3, '[]', '[]', 'workersguild.png'),
+('Craftsmens Guild', 'VIOLET', 'AGE_III', '{"STONE":2,"ORE":1}', 0, 3, '[]', '[]', 'craftsmensguild.png'),
+('Magistrates Guild', 'VIOLET', 'AGE_III', '{"WOOD":3,"STONE":1,"TEXTILE":1}', 0, 3, '[]', '[]', 'magistratesguild.png'),
+('Traders Guild', 'VIOLET', 'AGE_III', '{"TEXTILE":1,"GLASS":1,"PAPER":1}', 0, 3, '[]', '[]', 'tradersguild.png'),
+('Spies Guild', 'VIOLET', 'AGE_III', '{"BRICK":2,"GLASS":1}', 0, 3, '[]', '[]', 'spiesguild.png'),
+('Philosophers Guild', 'VIOLET', 'AGE_III', '{"BRICK":3,"TEXTILE":1,"PAPER":1}', 0, 3, '[]', '[]', 'philosophersguild.png'),
+('Shipowners Guild', 'VIOLET', 'AGE_III', '{"WOOD":3,"GLASS":1,"PAPER":1}', 0, 3, '[]', '[]', 'shipownersguild.png'),
+('Scientists Guild', 'VIOLET', 'AGE_III', '{"WOOD":2,"ORE":2,"PAPER":1}', 0, 3, '[]', '[]', 'scientistsguild.png'),
+('Decorators Guild', 'VIOLET', 'AGE_III', '{"ORE":2,"STONE":1,"TEXTILE":1}', 0, 3, '[]', '[]', NULL),
+('Builders Guild', 'VIOLET', 'AGE_III', '{"STONE":3,"BRICK":1,"GLASS":1}', 0, 3, '[]', '[]', 'buildersguild.png'),
 
 
 -- Example of duplicate cards for different player counts

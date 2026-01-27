@@ -34,7 +34,7 @@ public class RessourceCostConverter implements AttributeConverter<Map<Ressources
         try {
             Map<Ressources, Integer> map = OBJECT_MAPPER.readValue(dbData, new TypeReference<Map<Ressources, Integer>>() {
             });
-            if (map == null) {
+            if (map == null || map.isEmpty()) {
                 return new EnumMap<>(Ressources.class);
             }
             return new EnumMap<>(map);

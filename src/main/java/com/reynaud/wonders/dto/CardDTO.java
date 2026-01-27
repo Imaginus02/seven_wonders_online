@@ -1,60 +1,46 @@
-package com.reynaud.wonders.entity;
+package com.reynaud.wonders.dto;
 
-import jakarta.persistence.*;
+import com.reynaud.wonders.entity.Age;
+import com.reynaud.wonders.entity.CardType;
+import com.reynaud.wonders.entity.Ressources;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.EnumMap;
 import java.util.Map;
 
-@Entity
-@Table(name = "cards")
-public class CardEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class CardDTO {
     private Long id;
 
-    @Column(nullable = false, length = 100)
-    @NotBlank
+    @NotBlank(message = "Card name is required")
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    @NotNull
+    @NotNull(message = "Card type is required")
     private CardType type;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    @NotNull
+    @NotNull(message = "Age is required")
     private Age age;
 
-    @Column(length = 500)
-    @Convert(converter = RessourceCostConverter.class)
     private Map<Ressources, Integer> cost = new EnumMap<>(Ressources.class);
 
-    @Column(name = "coin_cost")
-    private Integer coinCost = 0; // Coins required in addition to resources
+    private Integer coinCost = 0;
 
-    @Column(length = 200)
     private String image;
 
-    @Column(name = "min_player_count", nullable = false)
-    @NotNull
-    private Integer minPlayerCount; // Minimum number of players for this card to be used
+    @NotNull(message = "Minimum player count is required")
+    private Integer minPlayerCount;
 
-    @Column(length = 1000)
-    private String incomingLinks; // JSON array of card names/ids
+    private String incomingLinks;
 
-    @Column(length = 1000)
-    private String outgoingLinks; // JSON array of card names/ids
+    private String outgoingLinks;
 
     // Default constructor
-    public CardEntity() {
+    public CardDTO() {
     }
 
-    // Constructor with fields
-    public CardEntity(String name, CardType type, Age age, Map<Ressources, Integer> cost, Integer coinCost, Integer minPlayerCount, String incomingLinks, String outgoingLinks, String image) {
+    // Constructor with all fields
+    public CardDTO(Long id, String name, CardType type, Age age, Map<Ressources, Integer> cost, Integer coinCost, Integer minPlayerCount, String incomingLinks, String outgoingLinks, String image) {
+        this.id = id;
         this.name = name;
         this.type = type;
         this.age = age;
@@ -111,6 +97,30 @@ public class CardEntity {
         }
     }
 
+    public Integer getCoinCost() {
+        return coinCost;
+    }
+
+    public void setCoinCost(Integer coinCost) {
+        this.coinCost = coinCost;
+    }
+
+    public Integer getMinPlayerCount() {
+        return minPlayerCount;
+    }
+
+    public void setMinPlayerCount(Integer minPlayerCount) {
+        this.minPlayerCount = minPlayerCount;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
     public String getIncomingLinks() {
         return incomingLinks;
     }
@@ -125,29 +135,5 @@ public class CardEntity {
 
     public void setOutgoingLinks(String outgoingLinks) {
         this.outgoingLinks = outgoingLinks;
-    }
-
-    public Integer getCoinCost() {
-        return coinCost;
-    }
-
-    public void setCoinCost(Integer coinCost) {
-        this.coinCost = coinCost;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-    public Integer getMinPlayerCount() {
-        return minPlayerCount;
-    }
-
-    public void setMinPlayerCount(Integer minPlayerCount) {
-        this.minPlayerCount = minPlayerCount;
     }
 }

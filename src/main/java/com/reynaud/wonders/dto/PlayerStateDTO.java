@@ -1,12 +1,13 @@
 package com.reynaud.wonders.dto;
 
-import com.reynaud.wonders.entity.Ressources;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+
+import com.reynaud.wonders.model.Ressources;
 
 public class PlayerStateDTO {
     private Long id;

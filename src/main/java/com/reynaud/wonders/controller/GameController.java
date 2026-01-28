@@ -2,8 +2,8 @@ package com.reynaud.wonders.controller;
 
 import com.reynaud.wonders.dto.GameDTO;
 import com.reynaud.wonders.entity.GameEntity;
-import com.reynaud.wonders.entity.GameStatus;
 import com.reynaud.wonders.entity.UserEntity;
+import com.reynaud.wonders.model.GameStatus;
 import com.reynaud.wonders.service.GameService;
 import com.reynaud.wonders.service.UserService;
 import org.springframework.http.HttpStatus;

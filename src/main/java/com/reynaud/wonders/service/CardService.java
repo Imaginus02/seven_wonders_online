@@ -1,9 +1,10 @@
 package com.reynaud.wonders.service;
 
 import com.reynaud.wonders.dao.CardDAO;
-import com.reynaud.wonders.entity.Age;
 import com.reynaud.wonders.entity.CardEntity;
-import com.reynaud.wonders.entity.CardType;
+import com.reynaud.wonders.model.Age;
+import com.reynaud.wonders.model.CardType;
+
 import org.springframework.stereotype.Service;
 
 import java.util.*;

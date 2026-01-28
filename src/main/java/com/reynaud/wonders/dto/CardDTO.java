@@ -1,13 +1,14 @@
 package com.reynaud.wonders.dto;
 
-import com.reynaud.wonders.entity.Age;
-import com.reynaud.wonders.entity.CardType;
-import com.reynaud.wonders.entity.Ressources;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.EnumMap;
 import java.util.Map;
+
+import com.reynaud.wonders.model.Age;
+import com.reynaud.wonders.model.CardType;
+import com.reynaud.wonders.model.Ressources;
 
 public class CardDTO {
     private Long id;

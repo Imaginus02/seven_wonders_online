@@ -1,7 +1,8 @@
 package com.reynaud.wonders.dao;
 
 import com.reynaud.wonders.entity.GameEntity;
-import com.reynaud.wonders.entity.GameStatus;
+import com.reynaud.wonders.model.GameStatus;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

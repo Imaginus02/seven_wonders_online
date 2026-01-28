@@ -1,12 +1,13 @@
 package com.reynaud.wonders.dto;
 
-import com.reynaud.wonders.entity.Age;
-import com.reynaud.wonders.entity.GameStatus;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.reynaud.wonders.model.Age;
+import com.reynaud.wonders.model.GameStatus;
 
 public class GameDTO {
     private Long id;

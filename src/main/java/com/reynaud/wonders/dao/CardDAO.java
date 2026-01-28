@@ -1,8 +1,9 @@
 package com.reynaud.wonders.dao;
 
 import com.reynaud.wonders.entity.CardEntity;
-import com.reynaud.wonders.entity.Age;
-import com.reynaud.wonders.entity.CardType;
+import com.reynaud.wonders.model.Age;
+import com.reynaud.wonders.model.CardType;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

@@ -1,11 +1,12 @@
 package com.reynaud.wonders.dto;
 
-import com.reynaud.wonders.entity.Ressources;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.EnumMap;
 import java.util.Map;
+
+import com.reynaud.wonders.model.Ressources;
 
 public class WonderDTO {
     private Long id;

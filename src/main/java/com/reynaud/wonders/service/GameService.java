@@ -3,6 +3,8 @@ package com.reynaud.wonders.service;
 import com.reynaud.wonders.dao.GameDAO;
 import com.reynaud.wonders.dto.GameDTO;
 import com.reynaud.wonders.entity.*;
+import com.reynaud.wonders.model.GameStatus;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -1,4 +1,4 @@
-package com.reynaud.wonders.entity;
+package com.reynaud.wonders.model;
 
 public enum Age {
     AGE_I,

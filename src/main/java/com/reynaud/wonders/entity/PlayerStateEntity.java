@@ -8,6 +8,8 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+import com.reynaud.wonders.model.Ressources;
+
 @Entity
 @Table(name = "player_states")
 public class PlayerStateEntity {

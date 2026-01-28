@@ -1,8 +1,8 @@
 package com.reynaud.wonders.controller;
 
-import com.reynaud.wonders.entity.Age;
 import com.reynaud.wonders.entity.CardEntity;
-import com.reynaud.wonders.entity.CardType;
+import com.reynaud.wonders.model.Age;
+import com.reynaud.wonders.model.CardType;
 import com.reynaud.wonders.service.CardService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

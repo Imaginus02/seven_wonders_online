@@ -7,6 +7,10 @@ import jakarta.validation.constraints.NotNull;
 import java.util.EnumMap;
 import java.util.Map;
 
+import com.reynaud.wonders.model.Age;
+import com.reynaud.wonders.model.CardType;
+import com.reynaud.wonders.model.Ressources;
+
 @Entity
 @Table(name = "cards")
 public class CardEntity {

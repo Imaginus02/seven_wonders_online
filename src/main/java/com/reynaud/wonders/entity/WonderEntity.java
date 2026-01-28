@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import java.util.EnumMap;
 import java.util.Map;
 
+import com.reynaud.wonders.model.Ressources;
+
 @Entity
 @Table(name = "wonders")
 public class WonderEntity {

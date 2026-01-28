@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.reynaud.wonders.model.Age;
+import com.reynaud.wonders.model.GameStatus;
+
 @Entity
 @Table(name = "games", indexes = {
         @Index(name = "idx_games_status", columnList = "status"),

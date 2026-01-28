@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games - 7 Wonders Online</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { margin-bottom: 10px; color: #333; }
+        .welcome { color: #4CAF50; margin-bottom: 20px; }
+        .section { margin-top: 25px; }
+        .section h2 { margin-bottom: 10px; }
+        .game-card {
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .game-meta { color: #555; }
+        .btn {
+            display: inline-block;
+            padding: 8px 14px;
+            background-color: #2196F3;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .btn:hover { background-color: #0b7dda; }
+        .empty { color: #888; font-style: italic; }
+        .nav { margin-bottom: 15px; }
+        .nav a { color: #2196F3; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="nav"><a href="/home">&larr; Back to Home</a></div>
+    <h1>Games</h1>
+    <p class="welcome" th:if="${username}">Signed in as <strong th:text="${username}">user</strong></p>
+
+    <div class="section">
+        <h2>My Games</h2>
+        <div th:if="${#lists.isEmpty(myGames)}" class="empty">You are not in any games yet.</div>
+        <div th:each="game : ${myGames}" class="game-card">
+            <div>
+                <div><strong>Game #</strong><span th:text="${game.id}">1</span></div>
+                <div class="game-meta">
+                    <span th:text="${game.status}">WAITING</span>
+                    · Players <span th:text="${game.userIds.size()}">0</span>/<span th:text="${game.maxPlayers}">7</span>
+                    · Turn <span th:text="${game.currentTurn}">0</span>
+                </div>
+            </div>
+            <a th:href="@{'/games/' + ${game.id}}" class="btn">Open</a>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Available Games</h2>
+        <div th:if="${#lists.isEmpty(availableGames)}" class="empty">No open games. Create one via API or wait for hosts.</div>
+        <div th:each="game : ${availableGames}" class="game-card">
+            <div>
+                <div><strong>Game #</strong><span th:text="${game.id}">1</span></div>
+                <div class="game-meta">
+                    <span th:text="${game.status}">WAITING</span>
+                    · Players <span th:text="${game.userIds.size()}">0</span>/<span th:text="${game.maxPlayers}">7</span>
+                    · Turn <span th:text="${game.currentTurn}">0</span>
+                </div>
+            </div>
+            <a th:href="@{'/games/' + ${game.id}}" class="btn">Open</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -41,4 +41,9 @@ public class UserService {
     public boolean usernameExists(String username) {
         return userDAO.findByUsername(username) != null;
     }
+
+    @Transactional(readOnly = true)
+    public UserEntity findByUsername(String username) {
+        return userDAO.findByUsername(username);
+    }
 }

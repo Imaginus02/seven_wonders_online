@@ -105,3 +105,39 @@ INSERT INTO cards (name, type, age, cost, coin_cost, min_player_count, incoming_
 ('Clay Pool', 'BROWN', 'AGE_I', '{}', 0, 5, '[]', '[]', 'claypool.png'),
 
 ('Chamber of Commerce', 'YELLOW', 'AGE_III', '{"BRICK":2,"PAPER":1}', 0, 4, '[]', '[]', 'chamberofcommerce.png');
+
+
+-- Test Users (passwords: alice="password1", bob="password2", charlie="password3")
+-- Using {noop} prefix for plain text passwords (for testing only)
+INSERT INTO users (username, password, role) VALUES
+('alice', '{noop}password1', 'ROLE_USER'),
+('bob', '{noop}password2', 'ROLE_USER'),
+('charlie', '{noop}password3', 'ROLE_USER');
+
+-- Test Game
+INSERT INTO games (status, current_age, current_turn, min_players, max_players, created_at, current_player_index) VALUES
+('WAITING', NULL, 0, 3, 7, CURRENT_TIMESTAMP, 0);
+
+-- Link users to the game (assuming game id is 1 and user ids are 1, 2, 3)
+INSERT INTO game_users (game_id, user_id) VALUES
+(1, 1),
+(1, 2),
+(1, 3);
+
+
+-- Test Wonders (mockup data - to be filled with complete information)
+INSERT INTO wonders (name, face, starting_resources, number_of_stages, image) VALUES
+('Alexandria', 'A', '{"GLASS":1}', 3, 'alexandriaA.png'),
+('Alexandria', 'B', '{"GLASS":1}', 3, 'alexandriaB.png'),
+('Babylon', 'A', '{"WOOD":1}', 3, 'babylonA.png'),
+('Babylon', 'B', '{"WOOD":1}', 3, 'babylonB.png'),
+('Ephesos', 'A', '{"PAPER":1}', 3, 'ephesosA.png'),
+('Ephesos', 'B', '{"PAPER":1}', 3, 'ephesosB.png'),
+('Gizah', 'A', '{"STONE":1}', 3, 'gizahA.png'),
+('Gizah', 'B', '{"STONE":1}', 4, 'gizahB.png'),
+('Halikarnassos', 'A', '{"TEXTILE":1}', 3, 'halikarnassusA.png'),
+('Halikarnassos', 'B', '{"TEXTILE":1}', 3, 'halikarnassusB.png'),
+('Olympia', 'A', '{"BRICK":1}', 3, 'olympiaA.png'),
+('Olympia', 'B', '{"BRICK":1}', 3, 'olympiaB.png'),
+('Rhodes', 'A', '{"ORE":1}', 3, 'rhodosA.png'),
+('Rhodes', 'B', '{"ORE":1}', 2, 'rhodosB.png');

@@ -1,0 +1,99 @@
+package com.reynaud.wonders.service;
+
+import com.reynaud.wonders.dao.PlayerStateDAO;
+import com.reynaud.wonders.dto.PlayerStateDTO;
+import com.reynaud.wonders.entity.GameEntity;
+import com.reynaud.wonders.entity.PlayerStateEntity;
+import com.reynaud.wonders.entity.UserEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class PlayerStateService {
+
+    private final PlayerStateDAO playerStateDAO;
+
+    public PlayerStateService(PlayerStateDAO playerStateDAO) {
+        this.playerStateDAO = playerStateDAO;
+    }
+
+    @Transactional
+    public PlayerStateEntity createPlayerState(GameEntity game, UserEntity user, Integer position) {
+        PlayerStateEntity playerState = new PlayerStateEntity(game, user, position);
+        return playerStateDAO.save(playerState);
+    }
+
+    @Transactional
+    public PlayerStateEntity updatePlayerState(PlayerStateEntity playerState) {
+        return playerStateDAO.save(playerState);
+    }
+
+    @Transactional(readOnly = true)
+    public PlayerStateEntity getPlayerStateById(Long id) {
+        return playerStateDAO.findById(id).orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PlayerStateEntity> getPlayerStatesByGameId(Long gameId) {
+        return playerStateDAO.findByGameId(gameId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PlayerStateEntity> getPlayerStatesByUserId(Long userId) {
+        return playerStateDAO.findByUserId(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public PlayerStateEntity getPlayerStateByGameIdAndUserId(Long gameId, Long userId) {
+        return playerStateDAO.findByGameIdAndUserId(gameId, userId);
+    }
+
+    @Transactional(readOnly = true)
+    public PlayerStateEntity getPlayerStateByGameIdAndPosition(Long gameId, Integer position) {
+        return playerStateDAO.findByGameIdAndPosition(gameId, position);
+    }
+
+    @Transactional
+    public void deletePlayerState(Long id) {
+        playerStateDAO.deleteById(id);
+    }
+
+    // Conversion methods
+    public PlayerStateDTO convertToDTO(PlayerStateEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        PlayerStateDTO dto = new PlayerStateDTO();
+        dto.setId(entity.getId());
+        dto.setGameId(entity.getGame().getId());
+        dto.setUserId(entity.getUser().getId());
+        dto.setUsername(entity.getUser().getUsername());
+        dto.setPosition(entity.getPosition());
+        dto.setCoins(entity.getCoins());
+        dto.setMilitaryPoints(entity.getMilitaryPoints());
+        dto.setVictoryPoints(entity.getVictoryPoints());
+        dto.setWonderName(entity.getWonderName());
+        dto.setWonderSide(entity.getWonderSide());
+        dto.setWonderStage(entity.getWonderStage());
+        dto.setPlayedCardIds(entity.getPlayedCards().stream()
+                .map(card -> card.getId())
+                .collect(Collectors.toList()));
+        dto.setResources(entity.getResources());
+        dto.setScienceTablets(entity.getScienceTablets());
+        dto.setScienceCompasses(entity.getScienceCompasses());
+        dto.setScienceGears(entity.getScienceGears());
+        dto.setScienceWildcards(entity.getScienceWildcards());
+
+        return dto;
+    }
+
+    public List<PlayerStateDTO> convertToDTOList(List<PlayerStateEntity> entities) {
+        return entities.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+}

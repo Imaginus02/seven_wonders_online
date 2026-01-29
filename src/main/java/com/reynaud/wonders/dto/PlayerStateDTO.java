@@ -35,6 +35,9 @@ public class PlayerStateDTO {
     private Integer scienceCompasses = 0;
     private Integer scienceGears = 0;
     private Integer scienceWildcards = 0;
+    private Boolean hasPlayedThisTurn = false;
+    private List<Long> handCardIds = new ArrayList<>();
+    private List<Long> wonderCardIds = new ArrayList<>();
 
     // Default constructor
     public PlayerStateDTO() {
@@ -184,5 +187,29 @@ public class PlayerStateDTO {
 
     public void setScienceWildcards(Integer scienceWildcards) {
         this.scienceWildcards = scienceWildcards;
+    }
+
+    public Boolean getHasPlayedThisTurn() {
+        return hasPlayedThisTurn;
+    }
+
+    public void setHasPlayedThisTurn(Boolean hasPlayedThisTurn) {
+        this.hasPlayedThisTurn = hasPlayedThisTurn;
+    }
+
+    public List<Long> getHandCardIds() {
+        return handCardIds;
+    }
+
+    public void setHandCardIds(List<Long> handCardIds) {
+        this.handCardIds = handCardIds;
+    }
+
+    public List<Long> getWonderCardIds() {
+        return wonderCardIds;
+    }
+
+    public void setWonderCardIds(List<Long> wonderCardIds) {
+        this.wonderCardIds = wonderCardIds;
     }
 }

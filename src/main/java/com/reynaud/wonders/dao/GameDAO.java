@@ -22,9 +22,9 @@ public interface GameDAO extends JpaRepository<GameEntity, Long> {
     @Query("SELECT g FROM GameEntity g WHERE g.status IN :statuses ORDER BY g.createdAt DESC")
     List<GameEntity> findByStatusIn(@Param("statuses") List<GameStatus> statuses);
 
-    @Query("SELECT g FROM GameEntity g WHERE g.status = 'WAITING' AND SIZE(g.users) < g.maxPlayers ORDER BY g.createdAt DESC")
-    List<GameEntity> findAvailableGames();
+    @Query("SELECT g FROM GameEntity g WHERE g.status = :waiting AND SIZE(g.users) < g.nbrPlayers ORDER BY g.createdAt DESC")
+    List<GameEntity> findAvailableGames(@Param("waiting") GameStatus waiting);
 
-    @Query("SELECT COUNT(g) FROM GameEntity g WHERE g.status IN ('AGE_I', 'AGE_II', 'AGE_III')")
-    Long countActiveGames();
+    @Query("SELECT COUNT(g) FROM GameEntity g WHERE g.status IN :activeStatuses")
+    Long countActiveGames(@Param("activeStatuses") List<GameStatus> activeStatuses);
 }

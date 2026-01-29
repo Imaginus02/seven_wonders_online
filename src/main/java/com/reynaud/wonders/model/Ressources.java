@@ -7,5 +7,7 @@ public enum Ressources {
     BRICK,
     GLASS,
     PAPER,
-    TEXTILE
+    TEXTILE,
+    MUTABLE_BASE,
+    MUTABLE_ADVANCED
 }

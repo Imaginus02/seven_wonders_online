@@ -114,18 +114,6 @@ INSERT INTO users (username, password, role) VALUES
 ('bob', '{noop}password2', 'ROLE_USER'),
 ('charlie', '{noop}password3', 'ROLE_USER');
 
--- Test Game
-INSERT INTO games (status, current_age, current_turn, min_players, max_players, created_at, current_player_index) VALUES
-('WAITING', NULL, 0, 3, 7, CURRENT_TIMESTAMP, 0);
-
--- Link users to the game (assuming game id is 1 and user ids are 1, 2, 3)
-INSERT INTO game_users (game_id, user_id) VALUES
-(1, 1),
-(1, 2),
-(1, 3);
-
-
--- Test Wonders (mockup data - to be filled with complete information)
 INSERT INTO wonders (name, face, starting_resources, number_of_stages, image) VALUES
 ('Alexandria', 'A', '{"GLASS":1}', 3, 'alexandriaA.png'),
 ('Alexandria', 'B', '{"GLASS":1}', 3, 'alexandriaB.png'),

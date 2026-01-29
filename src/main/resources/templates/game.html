@@ -40,7 +40,7 @@
         <span class="pill" th:text="${game.status}">WAITING</span>
         · Age: <span th:text="${game.currentAge}">-</span>
         · Turn: <span th:text="${game.currentTurn}">0</span>
-        · Players: <span th:text="${game.userIds.size()}">0</span>/<span th:text="${game.maxPlayers}">7</span>
+        · Players: <span th:text="${game.userIds.size()}">0</span>
     </div>
 
     <div class="section">
@@ -75,6 +75,8 @@
             </div>
         </div>
     </div>
+    
+    <a th:href="@{/play(gameId=${game.id})}" class="nav-link">Play Game</a>
 </div>
 </body>
 </html>

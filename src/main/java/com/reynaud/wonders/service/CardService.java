@@ -44,4 +44,32 @@ public class CardService {
                         LinkedHashMap::new
                 ));
     }
+
+    /**
+     * Get all cards
+     */
+    public List<CardEntity> getAllCards() {
+        return cardDAO.findAll();
+    }
+
+    /**
+     * Get card by ID
+     */
+    public CardEntity getCardById(Long id) {
+        return cardDAO.findById(id).orElse(null);
+    }
+
+    /**
+     * Get cards by IDs
+     */
+    public List<CardEntity> getCardsByIds(List<Long> ids) {
+        return cardDAO.findAllById(ids);
+    }
+
+    /**
+     * Get cards by Age
+     */
+    public List<CardEntity> getCardsByAge(Age age) {
+        return cardDAO.findByAge(age);
+    }
 }

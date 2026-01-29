@@ -3,6 +3,7 @@ package com.reynaud.wonders.service;
 import com.reynaud.wonders.dao.UserDAO;
 import com.reynaud.wonders.dto.UserDTO;
 import com.reynaud.wonders.entity.UserEntity;
+import java.util.List;
 import java.util.Locale;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -45,5 +46,15 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserEntity findByUsername(String username) {
         return userDAO.findByUsername(username);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserEntity> getAllUsers() {
+        return userDAO.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public UserEntity findByIdIfExists(Long id) {
+        return userDAO.findById(id).orElse(null);
     }
 }

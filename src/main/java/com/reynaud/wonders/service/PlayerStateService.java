@@ -87,6 +87,13 @@ public class PlayerStateService {
         dto.setScienceCompasses(entity.getScienceCompasses());
         dto.setScienceGears(entity.getScienceGears());
         dto.setScienceWildcards(entity.getScienceWildcards());
+        dto.setHasPlayedThisTurn(entity.getHasPlayedThisTurn());
+        dto.setHandCardIds(entity.getHand().stream()
+                .map(card -> card.getId())
+                .collect(Collectors.toList()));
+        dto.setWonderCardIds(entity.getWonderCards().stream()
+                .map(card -> card.getId())
+                .collect(Collectors.toList()));
 
         return dto;
     }

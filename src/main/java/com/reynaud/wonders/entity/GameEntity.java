@@ -76,11 +76,8 @@ public class GameEntity {
     @Column(name = "current_turn", nullable = false)
     private Integer currentTurn = 0;
 
-    @Column(name = "min_players", nullable = false)
-    private Integer minPlayers = 3;
-
-    @Column(name = "max_players", nullable = false)
-    private Integer maxPlayers = 7;
+    @Column(name = "nbr_players", nullable = false)
+    private Integer nbrPlayers = 3;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -188,20 +185,12 @@ public class GameEntity {
         this.currentTurn = currentTurn;
     }
 
-    public Integer getMinPlayers() {
-        return minPlayers;
+    public Integer getNbrPlayers() {
+        return nbrPlayers;
     }
 
-    public void setMinPlayers(Integer minPlayers) {
-        this.minPlayers = minPlayers;
-    }
-
-    public Integer getMaxPlayers() {
-        return maxPlayers;
-    }
-
-    public void setMaxPlayers(Integer maxPlayers) {
-        this.maxPlayers = maxPlayers;
+    public void setNbrPlayers(Integer nbrPlayers) {
+        this.nbrPlayers = nbrPlayers;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -261,13 +250,5 @@ public class GameEntity {
     public void removePlayerState(PlayerStateEntity playerState) {
         playerStates.remove(playerState);
         playerState.setGame(null);
-    }
-
-    public boolean isFull() {
-        return users.size() >= maxPlayers;
-    }
-
-    public boolean hasEnoughPlayers() {
-        return users.size() >= minPlayers;
     }
 }

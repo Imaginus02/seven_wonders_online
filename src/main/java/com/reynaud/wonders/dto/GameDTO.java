@@ -25,8 +25,7 @@ public class GameDTO {
 
     private Age currentAge;
     private Integer currentTurn = 0;
-    private Integer minPlayers = 3;
-    private Integer maxPlayers = 7;
+    private Integer nbrPlayers = 3;
     private LocalDateTime createdAt;
     private LocalDateTime startedAt;
     private LocalDateTime finishedAt;
@@ -134,20 +133,12 @@ public class GameDTO {
         this.currentTurn = currentTurn;
     }
 
-    public Integer getMinPlayers() {
-        return minPlayers;
+    public Integer getNbrPlayers() {
+        return nbrPlayers;
     }
 
-    public void setMinPlayers(Integer minPlayers) {
-        this.minPlayers = minPlayers;
-    }
-
-    public Integer getMaxPlayers() {
-        return maxPlayers;
-    }
-
-    public void setMaxPlayers(Integer maxPlayers) {
-        this.maxPlayers = maxPlayers;
+    public void setNbrPlayers(Integer nbrPlayers) {
+        this.nbrPlayers = nbrPlayers;
     }
 
     public LocalDateTime getCreatedAt() {

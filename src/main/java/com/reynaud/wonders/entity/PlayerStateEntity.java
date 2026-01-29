@@ -75,6 +75,26 @@ public class PlayerStateEntity {
     @Column(name = "science_wildcards")
     private Integer scienceWildcards = 0;
 
+    @Column(name = "has_played_this_turn", nullable = false)
+    private Boolean hasPlayedThisTurn = false;
+
+    @ManyToMany
+    @JoinTable(
+        name = "player_state_hand",
+        joinColumns = @JoinColumn(name = "player_state_id"),
+        inverseJoinColumns = @JoinColumn(name = "card_id")
+    )
+    private List<CardEntity> hand = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+        name = "player_state_wonder_cards",
+        joinColumns = @JoinColumn(name = "player_state_id"),
+        inverseJoinColumns = @JoinColumn(name = "card_id")
+    )
+    @OrderColumn(name = "card_order")
+    private List<CardEntity> wonderCards = new ArrayList<>();
+
     // Default constructor
     public PlayerStateEntity() {
     }
@@ -213,5 +233,29 @@ public class PlayerStateEntity {
 
     public void setScienceWildcards(Integer scienceWildcards) {
         this.scienceWildcards = scienceWildcards;
+    }
+
+    public Boolean getHasPlayedThisTurn() {
+        return hasPlayedThisTurn;
+    }
+
+    public void setHasPlayedThisTurn(Boolean hasPlayedThisTurn) {
+        this.hasPlayedThisTurn = hasPlayedThisTurn;
+    }
+
+    public List<CardEntity> getHand() {
+        return hand;
+    }
+
+    public void setHand(List<CardEntity> hand) {
+        this.hand = hand;
+    }
+
+    public List<CardEntity> getWonderCards() {
+        return wonderCards;
+    }
+
+    public void setWonderCards(List<CardEntity> wonderCards) {
+        this.wonderCards = wonderCards;
     }
 }

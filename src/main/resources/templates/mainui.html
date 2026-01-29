@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Card Hand Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/mainui.css">
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <div class="title">Seven Card Hand</div>
+      <div class="hint" id="viewHint">Tap a card to inspect, then play or cancel.</div>
+    </div>
+    <div class="status">
+      <div class="coins" id="coinsDisplay">
+        <img id="coinsIcon" alt="Coins" src="/assets/tokens/coin.png" />
+        <span id="coinsValue">0</span>
+      </div>
+      <button id="trashButton" class="secondary icon-button">Trash</button>
+      <button id="backToSelf" class="secondary back-button" hidden>Back to me</button>
+    </div>
+  </header>
+
+  <div class="player-bar">
+    <div class="player-title">Players</div>
+    <div class="player-list" id="playersList"></div>
+  </div>
+
+  <div class="wonder-display">
+    <img id="wonderImage" alt="Wonder" src="" />
+    <div class="card-backs" id="cardBacksContainer"></div>
+  </div>
+
+  <section class="played-section">
+    <div class="section-head">
+      <div class="section-title">Played Cards</div>
+      <div class="section-hint">Scroll if there are many</div>
+    </div>
+    <div class="played-grid" id="playedGrid" aria-label="Played cards"></div>
+    <div class="empty-state" id="playedEmpty">No cards played yet.</div>
+  </section>
+
+  <div class="modal" id="trashModal" aria-hidden="true">
+    <div class="modal-backdrop" id="trashBackdrop"></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="trashTitle">
+      <div class="modal-head">
+        <div class="section-title" id="trashTitle">Discarded Cards</div>
+        <button id="closeTrash" class="secondary small">Close</button>
+      </div>
+      <div class="discard-grid" id="discardGrid" aria-label="Discarded cards"></div>
+      <div class="empty-state" id="discardEmpty">No discarded cards.</div>
+    </div>
+  </div>
+
+  <main>
+    <div class="selected-overlay" id="selectedOverlay" aria-live="polite">
+      <div class="card-focus">
+        <img id="selectedImage" alt="Selected card" src="" />
+        <div class="actions">
+          <button id="playButton">Play</button>
+          <button id="buildButton" class="build">Build Wonder</button>
+          <button id="discardButton" class="discard">Discard</button>
+          <button class="secondary" id="cancelButton">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <div class="empty-state" id="emptyState" hidden>All cards have been played.</div>
+  </main>
+
+  <section class="hand" id="hand" aria-label="Hand of seven cards"></section>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

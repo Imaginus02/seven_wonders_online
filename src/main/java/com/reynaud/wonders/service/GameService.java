@@ -31,11 +31,10 @@ public class GameService {
     }
 
     @Transactional
-    public GameEntity createGame(Integer minPlayers, Integer maxPlayers) {
+    public GameEntity createGame(Integer nbrPlayers) {
         GameEntity game = new GameEntity();
         game.setStatus(GameStatus.WAITING);
-        game.setMinPlayers(minPlayers);
-        game.setMaxPlayers(maxPlayers);
+        game.setNbrPlayers(nbrPlayers);
         return gameDAO.save(game);
     }
 
@@ -66,12 +65,12 @@ public class GameService {
 
     @Transactional(readOnly = true)
     public List<GameEntity> getAvailableGames() {
-        return gameDAO.findAvailableGames();
+        return gameDAO.findAvailableGames(GameStatus.WAITING);
     }
 
     @Transactional(readOnly = true)
     public Long countActiveGames() {
-        return gameDAO.countActiveGames();
+        return gameDAO.countActiveGames(List.of(GameStatus.AGE_I, GameStatus.AGE_II, GameStatus.AGE_III));
     }
 
     @Transactional
@@ -79,10 +78,6 @@ public class GameService {
         GameEntity game = getGameById(gameId);
         if (game == null) {
             throw new IllegalArgumentException("Game not found");
-        }
-
-        if (game.isFull()) {
-            throw new IllegalStateException("Game is full");
         }
 
         if (game.getStatus() != GameStatus.WAITING) {
@@ -109,10 +104,6 @@ public class GameService {
         GameEntity game = getGameById(gameId);
         if (game == null) {
             throw new IllegalArgumentException("Game not found");
-        }
-
-        if (!game.hasEnoughPlayers()) {
-            throw new IllegalStateException("Not enough players to start the game");
         }
 
         if (game.getStatus() != GameStatus.WAITING) {
@@ -193,8 +184,7 @@ public class GameService {
         dto.setStatus(entity.getStatus());
         dto.setCurrentAge(entity.getCurrentAge());
         dto.setCurrentTurn(entity.getCurrentTurn());
-        dto.setMinPlayers(entity.getMinPlayers());
-        dto.setMaxPlayers(entity.getMaxPlayers());
+        dto.setNbrPlayers(entity.getNbrPlayers());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setStartedAt(entity.getStartedAt());
         dto.setFinishedAt(entity.getFinishedAt());

@@ -39,19 +39,23 @@ public class CardDistributionManager {
      */
     @Transactional
     public void distributeCards(GameEntity game) {
+        System.out.println("[CardDistributionManager.distributeCards] GameId: " + game.getId() + ", Age: " + game.getCurrentAge());
         List<PlayerStateEntity> players = playerStateService.getPlayerStatesByGameId(game.getId());
         List<CardEntity> ageDeck = cardService.getCardsByAge(game.getCurrentAge());
         int handSize = ageDeck.size() / players.size();
+        System.out.println("[CardDistributionManager.distributeCards] Players: " + players.size() + ", Deck size: " + ageDeck.size() + ", Hand size: " + handSize);
         ageDeck = ageDeck.stream()
                 .filter(card -> card.getMinPlayerCount() <= players.size())
                 .collect(Collectors.toList());
 
         if (game.getCurrentAge() == Age.AGE_III) {
+            System.out.println("[CardDistributionManager.distributeCards] Age III - handling violet cards");
             List<CardEntity> violetCards = ageDeck.stream()
                     .filter(card -> card.getType() == CardType.VIOLET)
                     .collect(Collectors.toList());
             Collections.shuffle(violetCards);
             violetCards = violetCards.subList(0, players.size() + 2);
+            System.out.println("[CardDistributionManager.distributeCards] Selected " + violetCards.size() + " violet cards");
             
             ageDeck = ageDeck.stream()
                     .filter(card -> card.getType() != CardType.VIOLET || card.getMinPlayerCount() <= players.size())
@@ -60,9 +64,11 @@ public class CardDistributionManager {
         }
         
         Collections.shuffle(ageDeck);
+        System.out.println("[CardDistributionManager.distributeCards] Distributing cards to players");
         for (int i = 0; i < players.size(); i++) {
             List<CardEntity> hand = ageDeck.subList(i * handSize, (i + 1) * handSize);
             players.get(i).setHand(new ArrayList<>(hand));
+            System.out.println("[CardDistributionManager.distributeCards] Player " + players.get(i).getUser().getUsername() + " received " + hand.size() + " cards");
             playerStateService.updatePlayerState(players.get(i));
         }
     }
@@ -76,7 +82,9 @@ public class CardDistributionManager {
      */
     @Transactional
     public void rotateHands(List<PlayerStateEntity> playerStates, boolean clockwise) {
+        System.out.println("[CardDistributionManager.rotateHands] Rotating hands. Direction: " + (clockwise ? "clockwise" : "counter-clockwise") + ", Players: " + (playerStates != null ? playerStates.size() : 0));
         if (playerStates == null || playerStates.size() <= 1) {
+            System.out.println("[CardDistributionManager.rotateHands] Not enough players to rotate");
             return;
         }
 
@@ -92,6 +100,7 @@ public class CardDistributionManager {
         for (int i = 0; i < playerCount; i++) {
             int targetIndex = clockwise ? (i + 1) % playerCount : (i - 1 + playerCount) % playerCount;
             orderedPlayers.get(targetIndex).setHand(hands.get(i));
+            System.out.println("[CardDistributionManager.rotateHands] Player " + orderedPlayers.get(i).getUser().getUsername() + " (pos " + i + ") hand goes to " + orderedPlayers.get(targetIndex).getUser().getUsername() + " (pos " + targetIndex + ")");
         }
 
         for (PlayerStateEntity player : orderedPlayers) {

@@ -54,15 +54,19 @@ public class GameInitManager {
      */
     @Transactional
     public GameEntity startGame(List<Long> playerIds) {
+        System.out.println("[GameInitManager.startGame] Starting new game with " + playerIds.size() + " players. Player IDs: " + playerIds);
         // Create the game with number of players
         GameEntity game = gameService.createGame(playerIds.size());
         game.setCurrentAge(Age.AGE_I);
+        System.out.println("[GameInitManager.startGame] Created game with ID: " + game.getId());
 
         // Add players to game and create their initial state
+        System.out.println("[GameInitManager.startGame] Adding players to game");
         Integer position = 0;
         for (Long userId : playerIds) {
             UserEntity user = userService.findByIdIfExists(userId);
             if (user != null) {
+                System.out.println("[GameInitManager.startGame] Adding player: " + user.getUsername() + " at position " + position);
                 // Add user to game
                 game = gameService.addUserToGame(game.getId(), user);
                 
@@ -77,18 +81,22 @@ public class GameInitManager {
         
         // Setup left and right neighbors for each player based on position
         List<PlayerStateEntity> playerStates = playerStateService.getPlayerStatesByGameId(game.getId());
+        System.out.println("[GameInitManager.startGame] Setting up neighbor relationships for " + playerStates.size() + " players");
         setupNeighborRelationships(game, playerStates);
         
         // Assign wonders to all players
+        System.out.println("[GameInitManager.startGame] Assigning wonders to players");
         wonderService.handleGameCreation(game);
         
         // Initialize card distribution
+        System.out.println("[GameInitManager.startGame] Distributing initial cards");
         cardDistributionManager.distributeCards(game);
         
         // Transition game to STARTING state with timestamp
         game.setStatus(GameStatus.STARTING);
         game.setStartedAt(LocalDateTime.now());
         game = gameService.updateGame(game);
+        System.out.println("[GameInitManager.startGame] Game initialization complete. GameId: " + game.getId() + ", Status: " + game.getStatus());
         
         return game;
     }
@@ -101,6 +109,7 @@ public class GameInitManager {
      * @param playerStates list of player states in the game
      */
     private void setupNeighborRelationships(GameEntity game, List<PlayerStateEntity> playerStates) {
+        System.out.println("[GameInitManager.setupNeighborRelationships] Setting up neighbors for game: " + game.getId());
         for (PlayerStateEntity playerState : playerStates) {
             int numPlayers = playerStates.size();
             int currentPosition = playerState.getPosition();
@@ -114,6 +123,8 @@ public class GameInitManager {
             int rightPosition = (currentPosition + 1) % numPlayers;
             PlayerStateEntity rightNeighbor = playerStateService.getPlayerStateByGameIdAndPosition(game.getId(), rightPosition);
             playerState.setRightNeighbor(rightNeighbor);
+            
+            System.out.println("[GameInitManager.setupNeighborRelationships] Player: " + playerState.getUser().getUsername() + " (pos " + currentPosition + ") - Left: " + leftNeighbor.getUser().getUsername() + " (pos " + leftPosition + "), Right: " + rightNeighbor.getUser().getUsername() + " (pos " + rightPosition + ")");
             
             // Update the player state
             playerStateService.updatePlayerState(playerState);

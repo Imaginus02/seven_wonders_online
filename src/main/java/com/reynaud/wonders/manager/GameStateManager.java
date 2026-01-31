@@ -37,12 +37,15 @@ public class GameStateManager {
      */
     @Transactional
     public GameEntity startGame(GameEntity game) {
+        System.out.println("[GameStateManager.startGame] GameId: " + game.getId() + ", Current status: " + game.getStatus());
         if (game.getStatus() != GameStatus.WAITING) {
+            System.out.println("[GameStateManager.startGame] ERROR - Game has already started");
             throw new IllegalStateException("Game has already started");
         }
 
         game.setStatus(GameStatus.STARTING);
         game.setStartedAt(LocalDateTime.now());
+        System.out.println("[GameStateManager.startGame] Game started at: " + game.getStartedAt());
         return gameDAO.save(game);
     }
 
@@ -55,9 +58,11 @@ public class GameStateManager {
      */
     @Transactional
     public GameEntity finishGame(GameEntity game, UserEntity winner) {
+        System.out.println("[GameStateManager.finishGame] GameId: " + game.getId() + ", Winner: " + (winner != null ? winner.getUsername() : "null"));
         game.setStatus(GameStatus.FINISHED);
         game.setFinishedAt(LocalDateTime.now());
         game.setWinner(winner);
+        System.out.println("[GameStateManager.finishGame] Game finished at: " + game.getFinishedAt());
         return gameDAO.save(game);
     }
 
@@ -69,8 +74,10 @@ public class GameStateManager {
      */
     @Transactional
     public GameEntity cancelGame(GameEntity game) {
+        System.out.println("[GameStateManager.cancelGame] GameId: " + game.getId() + ", Current status: " + game.getStatus());
         game.setStatus(GameStatus.CANCELLED);
         game.setFinishedAt(LocalDateTime.now());
+        System.out.println("[GameStateManager.cancelGame] Game cancelled at: " + game.getFinishedAt());
         return gameDAO.save(game);
     }
 }

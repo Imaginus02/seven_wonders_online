@@ -323,12 +323,13 @@ public class GameStateApiController {
      * Processes a card action (play, build, or discard)
      */
     @PostMapping("/card-action")
-    public ResponseEntity<Map<String, Boolean>> cardAction(
+    public ResponseEntity<Map<String, Object>> cardAction(
             @RequestBody Map<String, Object> request,
             Authentication authentication) {
         if (authentication == null) {
-            Map<String, Boolean> errorResponse = new HashMap<>();
+            Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
+            errorResponse.put("message", "User not authenticated");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         }
 
@@ -338,29 +339,33 @@ public class GameStateApiController {
         
         // Validate action type
         if (!List.of("play", "build", "discard").contains(action)) {
-            Map<String, Boolean> errorResponse = new HashMap<>();
+            Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
+            errorResponse.put("message", "Invalid action type");
             return ResponseEntity.badRequest().body(errorResponse);
         }
 
         UserEntity user = userService.findByUsername(authentication.getName());
         if (user == null) {
-            Map<String, Boolean> errorResponse = new HashMap<>();
+            Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
+            errorResponse.put("message", "User not authenticated");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         }
 
         PlayerStateEntity playerState = playerStateService.getPlayerStateByGameIdAndUserId(gameId, user.getId());
         if (playerState == null) {
-            Map<String, Boolean> errorResponse = new HashMap<>();
+            Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
+            errorResponse.put("message", "Player state not found");
             return ((BodyBuilder) ResponseEntity.notFound()).body(errorResponse);
         }
 
         GameEntity game = gameService.getGameById(gameId);
         if (game == null) {
-            Map<String, Boolean> errorResponse = new HashMap<>();
+            Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
+            errorResponse.put("message", "Game not found");
             return ((BodyBuilder) ResponseEntity.notFound()).body(errorResponse);
         }
 
@@ -371,8 +376,16 @@ public class GameStateApiController {
                 .orElse(null);
 
         if (cardToPlay == null) {
-            Map<String, Boolean> errorResponse = new HashMap<>();
+            Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
+            errorResponse.put("message", "Card data not sent correctly or card not in hand");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+
+        if (playerState.getHasPlayedThisTurn()) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Player has already played this turn");
             return ResponseEntity.badRequest().body(errorResponse);
         }
 
@@ -401,8 +414,35 @@ public class GameStateApiController {
             gameService.updateGame(game);  // Persist game changes after turn handling
         }
         
-        Map<String, Boolean> response = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
         response.put("success", actionSuccess);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GET /api/has-played-this-turn
+     * Returns whether the player has played a card this turn
+     */
+    @GetMapping("/has-played-this-turn")
+    public ResponseEntity<Map<String, Boolean>> getHasPlayedThisTurn(
+            @RequestParam Long gameId,
+            Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        UserEntity user = userService.findByUsername(authentication.getName());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        PlayerStateEntity playerState = playerStateService.getPlayerStateByGameIdAndUserId(gameId, user.getId());
+        if (playerState == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("hasPlayedThisTurn", playerState.getHasPlayedThisTurn());
         return ResponseEntity.ok(response);
     }
 }

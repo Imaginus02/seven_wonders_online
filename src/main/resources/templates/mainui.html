@@ -74,6 +74,28 @@
 
   <section class="hand" id="hand" aria-label="Hand of seven cards"></section>
 
-  <script src="/app.js" defer></script>
+  <!-- Core configuration and utilities -->
+  <script src="/js/config.js" defer></script>
+  
+  <!-- API communication layer -->
+  <script src="/js/api.js" defer></script>
+  
+  <!-- Rendering functions -->
+  <script src="/js/render.js" defer></script>
+  
+  <!-- Loader functions (API + Render orchestration) -->
+  <script src="/js/loader.js" defer></script>
+  
+  <!-- Card selection and actions -->
+  <script src="/js/card-handler.js" defer></script>
+  
+  <!-- Player view management -->
+  <script src="/js/player-view.js" defer></script>
+  
+  <!-- Turn blocker - prevents actions when player has already played -->
+  <script src="/js/turn-blocker.js" defer></script>
+  
+  <!-- Application initialization and event listeners -->
+  <script src="/js/main.js" defer></script>
 </body>
 </html>

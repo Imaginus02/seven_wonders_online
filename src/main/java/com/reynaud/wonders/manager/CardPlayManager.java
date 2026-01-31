@@ -25,11 +25,14 @@ public class CardPlayManager {
      */
     @Transactional
     public boolean playCard(PlayerStateEntity playerState, CardEntity cardToPlay) {
+        System.out.println("[CardPlayManager.playCard] Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName() + ", Hand size: " + playerState.getHand().size());
         if (canPlayCard(playerState, cardToPlay)) {
             playerState.getHand().remove(cardToPlay);
             playerState.getPlayedCards().add(cardToPlay);
+            System.out.println("[CardPlayManager.playCard] SUCCESS - Card played. New hand size: " + playerState.getHand().size() + ", Played cards: " + playerState.getPlayedCards().size());
             return true;
         } else {
+            System.out.println("[CardPlayManager.playCard] FAILED - Cannot afford card");
             return false;
         }
     }
@@ -42,10 +45,15 @@ public class CardPlayManager {
      * @return true if the player can afford the card cost, false otherwise
      */
     public boolean canPlayCard(PlayerStateEntity playerState, CardEntity cardToPlay) {
-        if (cardToPlay.getCoinCost() == null) {
-            return canAffordCost(playerState, cardToPlay.getCost());
+        System.out.println("[CardPlayManager.canPlayCard] Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName() + ", CoinCost: " + cardToPlay.getCoinCost() + ", Player coins: " + playerState.getCoins());
+        if (cardToPlay.getCoinCost() == 0) {
+            boolean canAfford = canAffordCost(playerState, cardToPlay.getCost());
+            System.out.println("[CardPlayManager.canPlayCard] Resource cost check result: " + canAfford);
+            return canAfford;
         } else {
-            return cardToPlay.getCoinCost() <= playerState.getCoins();
+            boolean canAfford = cardToPlay.getCoinCost() <= playerState.getCoins();
+            System.out.println("[CardPlayManager.canPlayCard] Coin cost check result: " + canAfford);
+            return canAfford;
         }
     }
 
@@ -58,6 +66,7 @@ public class CardPlayManager {
      * @return true if the cost can be afforded, false otherwise
      */
     private boolean canAffordCost(PlayerStateEntity playerState, Map<Ressources, Integer> cardCost) {
+        System.out.println("[CardPlayManager.canAffordCost] Player: " + playerState.getUser().getUsername() + ", Card cost: " + cardCost + ", Player resources: " + playerState.getResources());
         Map<Ressources, Integer> playerRessources = playerState.getResources();
 
         // Step 1: Calculate missing resources after using player's own resources
@@ -105,7 +114,9 @@ public class CardPlayManager {
             }
         }
         
-        return missingBaseResources <= 0 && missingAdvancedResources <= 0;
+        boolean result = missingBaseResources <= 0 && missingAdvancedResources <= 0;
+        System.out.println("[CardPlayManager.canAffordCost] Result: " + result + ", Missing base: " + missingBaseResources + ", Missing advanced: " + missingAdvancedResources);
+        return result;
     }
 
     /**
@@ -129,8 +140,10 @@ public class CardPlayManager {
      */
     @Transactional
     public void discardCard(PlayerStateEntity playerState, CardEntity cardToDiscard, java.util.List<CardEntity> gameDiscard) {
+        System.out.println("[CardPlayManager.discardCard] Player: " + playerState.getUser().getUsername() + ", Card: " + cardToDiscard.getName() + ", Current coins: " + playerState.getCoins());
         playerState.getHand().remove(cardToDiscard);
         gameDiscard.add(cardToDiscard);
         playerState.setCoins(playerState.getCoins() + 3);
+        System.out.println("[CardPlayManager.discardCard] SUCCESS - Card discarded. New coins: " + playerState.getCoins() + ", Discard pile size: " + gameDiscard.size());
     }
 }

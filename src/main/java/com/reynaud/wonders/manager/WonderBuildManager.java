@@ -31,13 +31,16 @@ public class WonderBuildManager {
      */
     @Transactional
     public boolean buildWonderWithCard(PlayerStateEntity playerState, CardEntity cardToPlay) {
+        System.out.println("[WonderBuildManager.buildWonderWithCard] Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName() + ", Current wonder stage: " + playerState.getWonderStage() + ", Wonder: " + playerState.getWonder().getName());
         if (canBuildWonderWithCard(playerState, cardToPlay)) {
             playerState.getHand().remove(cardToPlay);
             playerState.setWonderStage(playerState.getWonderStage() + 1);
             playerState.getWonderCards().add(cardToPlay);
+            System.out.println("[WonderBuildManager.buildWonderWithCard] SUCCESS - Wonder stage built. New stage: " + playerState.getWonderStage() + ", Wonder cards: " + playerState.getWonderCards().size());
             // TODO: Apply wonder stage benefits
             return true;
         } else {
+            System.out.println("[WonderBuildManager.buildWonderWithCard] FAILED - Cannot build wonder stage");
             return false;
         }
     }
@@ -52,8 +55,10 @@ public class WonderBuildManager {
     public boolean canBuildWonderWithCard(PlayerStateEntity playerState, CardEntity cardToPlay) {
         WonderEntity wonder = playerState.getWonder();
         Integer wonderStage = playerState.getWonderStage();
+        System.out.println("[WonderBuildManager.canBuildWonderWithCard] Player: " + playerState.getUser().getUsername() + ", Wonder: " + wonder.getName() + ", Current stage: " + wonderStage + ", Max stages: " + wonder.getNumberOfStages());
 
         if (wonderStage >= wonder.getNumberOfStages() - 1) {
+            System.out.println("[WonderBuildManager.canBuildWonderWithCard] All stages already built");
             return false; // All stages already built
         }
 
@@ -70,6 +75,7 @@ public class WonderBuildManager {
      * @return true if the cost can be afforded, false otherwise
      */
     private boolean canAffordWonderStageCost(PlayerStateEntity playerState, Map<Ressources, Integer> wonderStageCost) {
+        System.out.println("[WonderBuildManager.canAffordWonderStageCost] Player: " + playerState.getUser().getUsername() + ", Stage cost: " + wonderStageCost + ", Player resources: " + playerState.getResources());
         Map<Ressources, Integer> playerRessources = playerState.getResources();
 
         // Step 1: Calculate missing resources after using player's own resources
@@ -117,7 +123,9 @@ public class WonderBuildManager {
             }
         }
         
-        return missingBaseResources <= 0 && missingAdvancedResources <= 0;
+        boolean result = missingBaseResources <= 0 && missingAdvancedResources <= 0;
+        System.out.println("[WonderBuildManager.canAffordWonderStageCost] Result: " + result + ", Missing base: " + missingBaseResources + ", Missing advanced: " + missingAdvancedResources);
+        return result;
     }
 
     /**

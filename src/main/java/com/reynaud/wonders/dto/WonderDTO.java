@@ -3,7 +3,9 @@ package com.reynaud.wonders.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 import com.reynaud.wonders.model.Ressources;
@@ -19,6 +21,8 @@ public class WonderDTO {
 
     private Map<Ressources, Integer> startingResources = new EnumMap<>(Ressources.class);
 
+    private List<Map<Ressources, Integer>> stageCosts = new ArrayList<>();
+
     @NotNull(message = "Number of stages is required")
     private Integer numberOfStages;
 
@@ -29,11 +33,12 @@ public class WonderDTO {
     }
 
     // Constructor with all fields
-    public WonderDTO(Long id, String name, String face, Map<Ressources, Integer> startingResources, Integer numberOfStages, String image) {
+    public WonderDTO(Long id, String name, String face, Map<Ressources, Integer> startingResources, List<Map<Ressources, Integer>> stageCosts, Integer numberOfStages, String image) {
         this.id = id;
         this.name = name;
         this.face = face;
         this.startingResources = startingResources;
+        this.stageCosts = stageCosts;
         this.numberOfStages = numberOfStages;
         this.image = image;
     }
@@ -69,6 +74,14 @@ public class WonderDTO {
 
     public void setStartingResources(Map<Ressources, Integer> startingResources) {
         this.startingResources = startingResources;
+    }
+
+    public List<Map<Ressources, Integer>> getStageCosts() {
+        return stageCosts;
+    }
+
+    public void setStageCosts(List<Map<Ressources, Integer>> stageCosts) {
+        this.stageCosts = stageCosts;
     }
 
     public Integer getNumberOfStages() {

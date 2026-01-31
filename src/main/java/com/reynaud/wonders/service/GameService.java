@@ -3,6 +3,7 @@ package com.reynaud.wonders.service;
 import com.reynaud.wonders.dao.GameDAO;
 import com.reynaud.wonders.dto.GameDTO;
 import com.reynaud.wonders.entity.*;
+import com.reynaud.wonders.model.Age;
 import com.reynaud.wonders.model.GameStatus;
 
 import org.springframework.stereotype.Service;
@@ -17,10 +18,17 @@ public class GameService {
 
     private final GameDAO gameDAO;
     private final PlayerStateService playerStateService;
+    private final WonderService wonderService;
+    private final CardActionService cardActionService;
+    private final UserService userService;
 
-    public GameService(GameDAO gameDAO, PlayerStateService playerStateService) {
+    public GameService(GameDAO gameDAO, PlayerStateService playerStateService, WonderService wonderService,
+                       CardActionService cardActionService, UserService userService) {
         this.gameDAO = gameDAO;
         this.playerStateService = playerStateService;
+        this.wonderService = wonderService;
+        this.cardActionService = cardActionService;
+        this.userService = userService;
     }
 
     @Transactional
@@ -152,6 +160,62 @@ public class GameService {
     @Transactional
     public void deleteGame(Long id) {
         gameDAO.deleteById(id);
+    }
+
+    /**
+     * Setup a new game with the given player IDs
+     * Adds players to game, creates player states, assigns wonders, and initializes game logic
+     */
+    @Transactional
+    public GameEntity setupGameWithPlayers(List<Long> playerIds) {
+        // Create the game
+        GameEntity game = createGame(playerIds.size());
+        game.setCurrentAge(Age.AGE_I);
+
+        // Add players to game and create their initial state
+        Integer position = 0;
+        for (Long userId : playerIds) {
+            UserEntity user = userService.findByIdIfExists(userId);
+            if (user != null) {
+                // Add user to game
+                game = addUserToGame(game.getId(), user);
+                
+                // Create PlayerStateEntity for this player
+                playerStateService.createPlayerState(game, user, position);
+                position++;
+            }
+        }
+        
+        // Reload game to get updated player states
+        game = getGameById(game.getId());
+        
+        // Setup left and right neighbors for each player based on position
+        List<PlayerStateEntity> playerStates = playerStateService.getPlayerStatesByGameId(game.getId());
+        for (PlayerStateEntity playerState : playerStates) {
+            int numPlayers = playerStates.size();
+            int currentPosition = playerState.getPosition();
+            
+            // Left neighbor is the player at position-1 (circular)
+            int leftPosition = (currentPosition - 1 + numPlayers) % numPlayers;
+            PlayerStateEntity leftNeighbor = playerStateService.getPlayerStateByGameIdAndPosition(game.getId(), leftPosition);
+            playerState.setLeftNeighbor(leftNeighbor);
+            
+            // Right neighbor is the player at position+1 (circular)
+            int rightPosition = (currentPosition + 1) % numPlayers;
+            PlayerStateEntity rightNeighbor = playerStateService.getPlayerStateByGameIdAndPosition(game.getId(), rightPosition);
+            playerState.setRightNeighbor(rightNeighbor);
+            
+            // Update the player state
+            playerStateService.updatePlayerState(playerState);
+        }
+        
+        // Assign wonders to all players
+        wonderService.handleGameCreation(game);
+        
+        // Initialize card distribution and other game logic
+        cardActionService.handleGameCreation(game);
+        
+        return game;
     }
 
     // Conversion methods

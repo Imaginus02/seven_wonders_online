@@ -114,18 +114,41 @@ INSERT INTO users (username, password, role) VALUES
 ('bob', '{noop}password2', 'ROLE_USER'),
 ('charlie', '{noop}password3', 'ROLE_USER');
 
-INSERT INTO wonders (name, face, starting_resources, number_of_stages, image) VALUES
-('Alexandria', 'A', '{"GLASS":1}', 3, 'alexandriaA.png'),
-('Alexandria', 'B', '{"GLASS":1}', 3, 'alexandriaB.png'),
-('Babylon', 'A', '{"WOOD":1}', 3, 'babylonA.png'),
-('Babylon', 'B', '{"WOOD":1}', 3, 'babylonB.png'),
-('Ephesos', 'A', '{"PAPER":1}', 3, 'ephesosA.png'),
-('Ephesos', 'B', '{"PAPER":1}', 3, 'ephesosB.png'),
-('Gizah', 'A', '{"STONE":1}', 3, 'gizahA.png'),
-('Gizah', 'B', '{"STONE":1}', 4, 'gizahB.png'),
-('Halikarnassos', 'A', '{"TEXTILE":1}', 3, 'halikarnassusA.png'),
-('Halikarnassos', 'B', '{"TEXTILE":1}', 3, 'halikarnassusB.png'),
-('Olympia', 'A', '{"BRICK":1}', 3, 'olympiaA.png'),
-('Olympia', 'B', '{"BRICK":1}', 3, 'olympiaB.png'),
-('Rhodes', 'A', '{"ORE":1}', 3, 'rhodosA.png'),
-('Rhodes', 'B', '{"ORE":1}', 2, 'rhodosB.png');
+INSERT INTO wonders (name, face, starting_resources, stage_costs, number_of_stages, image) VALUES
+-- Alexandria A: Glass starting resource, 3 stages with different costs
+-- Stage 0 (position 0): costs 2 wood
+-- Stage 1 (position 1): costs 3 ore  
+-- Stage 2 (position 2): costs 2 glass, 1 stone
+('Alexandria', 'A', '{"GLASS":1}', '[{"WOOD":2},{"ORE":3},{"GLASS":2,"STONE":1}]', 3, 'alexandriaA.png'),
+-- Alexandria B variant
+('Alexandria', 'B', '{"GLASS":1}', '[{"STONE":2},{"ORE":2,"BRICK":1},{"GLASS":1,"PAPER":1}]', 3, 'alexandriaB.png'),
+
+-- Babylon A
+('Babylon', 'A', '{"WOOD":1}', '[{"CLAY":2},{"WOOD":3,"BRICK":1},{"ORE":2,"GLASS":1}]', 3, 'babylonA.png'),
+-- Babylon B
+('Babylon', 'B', '{"WOOD":1}', '[{"BRICK":2},{"WOOD":2,"ORE":1},{"WOOD":1,"ORE":1,"TEXTILE":1}]', 3, 'babylonB.png'),
+
+-- Ephesos A
+('Ephesos', 'A', '{"PAPER":1}', '[{"STONE":1,"WOOD":1},{"CLAY":1,"ORE":1},{"PAPER":2,"GLASS":1}]', 3, 'ephesosA.png'),
+-- Ephesos B
+('Ephesos', 'B', '{"PAPER":1}', '[{"WOOD":2},{"BRICK":1,"STONE":1},{"ORE":1,"PAPER":1}]', 3, 'ephesosB.png'),
+
+-- Gizah A: 3 stages
+('Gizah', 'A', '{"STONE":1}', '[{"STONE":2},{"WOOD":3,"BRICK":1},{"STONE":2,"CLAY":1}]', 3, 'gizahA.png'),
+-- Gizah B: 4 stages (more complex)
+('Gizah', 'B', '{"STONE":1}', '[{"CLAY":2},{"WOOD":3},{"BRICK":2,"ORE":1},{"STONE":2,"TEXTILE":1}]', 4, 'gizahB.png'),
+
+-- Halikarnassos A
+('Halikarnassos', 'A', '{"TEXTILE":1}', '[{"BRICK":1,"WOOD":1},{"ORE":1,"GLASS":1},{"TEXTILE":2,"PAPER":1}]', 3, 'halikarnassusA.png'),
+-- Halikarnassos B
+('Halikarnassos', 'B', '{"TEXTILE":1}', '[{"CLAY":2},{"ORE":1,"WOOD":2},{"BRICK":1,"STONE":1}]', 3, 'halikarnassusB.png'),
+
+-- Olympia A
+('Olympia', 'A', '{"BRICK":1}', '[{"WOOD":2,"BRICK":1},{"ORE":1,"STONE":1},{"GLASS":1,"PAPER":1}]', 3, 'olympiaA.png'),
+-- Olympia B
+('Olympia', 'B', '{"BRICK":1}', '[{"BRICK":2},{"WOOD":2,"STONE":1},{"ORE":2,"TEXTILE":1}]', 3, 'olympiaB.png'),
+
+-- Rhodes A
+('Rhodes', 'A', '{"ORE":1}', '[{"WOOD":3},{"ORE":2,"BRICK":1},{"GLASS":1,"STONE":1}]', 3, 'rhodosA.png'),
+-- Rhodes B: 2 stages
+('Rhodes', 'B', '{"ORE":1}', '[{"ORE":2,"WOOD":1},{"BRICK":3,"TEXTILE":1}]', 2, 'rhodosB.png');

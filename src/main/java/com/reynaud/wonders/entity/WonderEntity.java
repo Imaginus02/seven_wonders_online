@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 import com.reynaud.wonders.model.Ressources;
@@ -28,6 +30,10 @@ public class WonderEntity {
     @Column(name = "starting_resources", length = 500)
     @Convert(converter = RessourceCostConverter.class)
     private Map<Ressources, Integer> startingResources = new EnumMap<>(Ressources.class);
+
+    @Column(name = "stage_costs", length = 2000)
+    @Convert(converter = StageCostsConverter.class)
+    private List<Map<Ressources, Integer>> stageCosts = new ArrayList<>();
 
     @Column(name = "number_of_stages", nullable = false)
     @NotNull
@@ -78,6 +84,14 @@ public class WonderEntity {
 
     public void setStartingResources(Map<Ressources, Integer> startingResources) {
         this.startingResources = startingResources;
+    }
+
+    public List<Map<Ressources, Integer>> getStageCosts() {
+        return stageCosts;
+    }
+
+    public void setStageCosts(List<Map<Ressources, Integer>> stageCosts) {
+        this.stageCosts = stageCosts;
     }
 
     public Integer getNumberOfStages() {

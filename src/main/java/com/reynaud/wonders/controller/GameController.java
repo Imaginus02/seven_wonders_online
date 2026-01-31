@@ -1,13 +1,11 @@
 package com.reynaud.wonders.controller;
 
 import com.reynaud.wonders.dto.GameDTO;
-import com.reynaud.wonders.entity.CardEntity;
 import com.reynaud.wonders.entity.GameEntity;
 import com.reynaud.wonders.entity.PlayerStateEntity;
 import com.reynaud.wonders.entity.UserEntity;
-import com.reynaud.wonders.entity.WonderEntity;
-import com.reynaud.wonders.model.Age;
 import com.reynaud.wonders.model.GameStatus;
+import com.reynaud.wonders.service.CardActionService;
 import com.reynaud.wonders.service.CardService;
 import com.reynaud.wonders.service.GameService;
 import com.reynaud.wonders.service.PlayerStateService;
@@ -20,12 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/games")
@@ -36,14 +29,16 @@ public class GameController {
     private final PlayerStateService playerStateService;
     private final CardService cardService;
     private final WonderService wonderService;
+    private final CardActionService cardActionService;
 
     public GameController(GameService gameService, UserService userService, PlayerStateService playerStateService,
-                          CardService cardService, WonderService wonderService) {
+                          CardService cardService, WonderService wonderService, CardActionService cardActionService) {
         this.gameService = gameService;
         this.userService = userService;
         this.playerStateService = playerStateService;
         this.cardService = cardService;
         this.wonderService = wonderService;
+        this.cardActionService = cardActionService;
     }
 
     // Web pages
@@ -108,60 +103,8 @@ public class GameController {
         }
 
         try {
-            // Create the game
-            GameEntity game = gameService.createGame(playerIds.size());
-            
-            // Get wonders and prepare distribution
-            List<WonderEntity> allWonders = wonderService.getAllWonders();
-            Map<String, List<WonderEntity>> wondersByName = allWonders.stream()
-                    .collect(Collectors.groupingBy(WonderEntity::getName));
-            List<String> wonderNames = new ArrayList<>(wondersByName.keySet());
-            Collections.shuffle(wonderNames);
-            Random random = new Random();
-
-            // Get suitable cards for this player count and shuffle
-            List<CardEntity> ageICards = cardService.getCardsByAge(Age.AGE_I);
-            List<CardEntity> suitableCards = ageICards.stream()
-                    .filter(card -> card.getMinPlayerCount() <= playerIds.size())
-                    .collect(Collectors.toList());
-            Collections.shuffle(suitableCards);
-
-            // Add players to game and create their initial state
-            List<PlayerStateEntity> playerStates = new ArrayList<>();
-            Integer position = 0;
-            int wonderIndex = 0;
-            
-            for (Long userId : playerIds) {
-                UserEntity user = userService.findByIdIfExists(userId);
-                if (user != null) {
-                    // Add user to game
-                    game = gameService.addUserToGame(game.getId(), user);
-                    
-                    // Create PlayerStateEntity for this player
-                    PlayerStateEntity playerState = playerStateService.createPlayerState(game, user, position);
-                    
-                    // Assign a random wonder (unique per player)
-                    String wonderName = wonderNames.get(wonderIndex % wonderNames.size());
-                    List<WonderEntity> wonderFaces = wondersByName.get(wonderName);
-                    WonderEntity selectedWonder = wonderFaces.get(random.nextInt(wonderFaces.size()));
-                    playerState.setWonderName(selectedWonder.getName());
-                    playerState.setWonderSide(selectedWonder.getFace());
-                    
-                    playerStates.add(playerState);
-                    wonderIndex++;
-                    position++;
-                }
-            }
-            
-            // Distribute 7 cards per player
-            int cardIndex = 0;
-            for (PlayerStateEntity playerState : playerStates) {
-                for (int i = 0; i < 7; i++) {
-                    playerState.getHand().add(suitableCards.get(cardIndex++));
-                }
-                playerStateService.updatePlayerState(playerState);
-            }
-
+            // Setup game with all players and initialize game logic
+            GameEntity game = gameService.setupGameWithPlayers(playerIds);
             return "redirect:/play?gameId=" + game.getId();
         } catch (Exception e) {
             model.addAttribute("error", "Error creating game: " + e.getMessage());

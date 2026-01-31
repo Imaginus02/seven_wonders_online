@@ -56,6 +56,11 @@ public class PlayerStateService {
         return playerStateDAO.findByGameIdAndPosition(gameId, position);
     }
 
+    public boolean allPlayersHavePlayedThisTurn(Long gameId) {
+        return playerStateDAO.findByGameId(gameId).stream()
+                .allMatch(PlayerStateEntity::getHasPlayedThisTurn);
+    }
+
     @Transactional
     public void deletePlayerState(Long id) {
         playerStateDAO.deleteById(id);
@@ -76,8 +81,7 @@ public class PlayerStateService {
         dto.setCoins(entity.getCoins());
         dto.setMilitaryPoints(entity.getMilitaryPoints());
         dto.setVictoryPoints(entity.getVictoryPoints());
-        dto.setWonderName(entity.getWonderName());
-        dto.setWonderSide(entity.getWonderSide());
+        dto.setWonderId(entity.getWonder().getId());
         dto.setWonderStage(entity.getWonderStage());
         dto.setPlayedCardIds(entity.getPlayedCards().stream()
                 .map(card -> card.getId())
@@ -94,6 +98,12 @@ public class PlayerStateService {
         dto.setWonderCardIds(entity.getWonderCards().stream()
                 .map(card -> card.getId())
                 .collect(Collectors.toList()));
+        if (entity.getLeftNeighbor() != null) {
+            dto.setLeftNeighborId(entity.getLeftNeighbor().getId());
+        }
+        if (entity.getRightNeighbor() != null) {
+            dto.setRightNeighborId(entity.getRightNeighbor().getId());
+        }
 
         return dto;
     }
@@ -103,4 +113,6 @@ public class PlayerStateService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+
+
 }

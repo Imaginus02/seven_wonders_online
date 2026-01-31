@@ -26,8 +26,6 @@ public class PlayerStateDTO {
     private Integer coins = 3;
     private Integer militaryPoints = 0;
     private Integer victoryPoints = 0;
-    private String wonderName;
-    private String wonderSide = "A";
     private Integer wonderStage = 0;
     private List<Long> playedCardIds = new ArrayList<>();
     private Map<Ressources, Integer> resources = new EnumMap<>(Ressources.class);
@@ -38,6 +36,9 @@ public class PlayerStateDTO {
     private Boolean hasPlayedThisTurn = false;
     private List<Long> handCardIds = new ArrayList<>();
     private List<Long> wonderCardIds = new ArrayList<>();
+    private Long wonderId;
+    private Long leftNeighborId;
+    private Long rightNeighborId;
 
     // Default constructor
     public PlayerStateDTO() {
@@ -117,20 +118,12 @@ public class PlayerStateDTO {
         this.victoryPoints = victoryPoints;
     }
 
-    public String getWonderName() {
-        return wonderName;
+    public Long getWonderId() {
+        return wonderId;
     }
 
-    public void setWonderName(String wonderName) {
-        this.wonderName = wonderName;
-    }
-
-    public String getWonderSide() {
-        return wonderSide;
-    }
-
-    public void setWonderSide(String wonderSide) {
-        this.wonderSide = wonderSide;
+    public void setWonderId(Long wonderId) {
+        this.wonderId = wonderId;
     }
 
     public Integer getWonderStage() {
@@ -211,5 +204,21 @@ public class PlayerStateDTO {
 
     public void setWonderCardIds(List<Long> wonderCardIds) {
         this.wonderCardIds = wonderCardIds;
+    }
+
+    public Long getLeftNeighborId() {
+        return leftNeighborId;
+    }
+
+    public void setLeftNeighborId(Long leftNeighborId) {
+        this.leftNeighborId = leftNeighborId;
+    }
+
+    public Long getRightNeighborId() {
+        return rightNeighborId;
+    }
+
+    public void setRightNeighborId(Long rightNeighborId) {
+        this.rightNeighborId = rightNeighborId;
     }
 }

@@ -41,11 +41,9 @@ public class PlayerStateEntity {
     @Column(nullable = false)
     private Integer victoryPoints = 0;
 
-    @Column(length = 100)
-    private String wonderName; // Name of the wonder board
-
-    @Column(name = "wonder_side", length = 1)
-    private String wonderSide = "A"; // A or B side
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "wonder_id")
+    private WonderEntity wonder; // Reference to the wonder board
 
     @Column(nullable = false)
     private Integer wonderStage = 0; // Current wonder stage built (0-3 or 0-4 depending on wonder)
@@ -94,6 +92,14 @@ public class PlayerStateEntity {
     )
     @OrderColumn(name = "card_order")
     private List<CardEntity> wonderCards = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "left_neighbor_id")
+    private PlayerStateEntity leftNeighbor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "right_neighbor_id")
+    private PlayerStateEntity rightNeighbor;
 
     // Default constructor
     public PlayerStateEntity() {
@@ -163,20 +169,12 @@ public class PlayerStateEntity {
         this.victoryPoints = victoryPoints;
     }
 
-    public String getWonderName() {
-        return wonderName;
+    public WonderEntity getWonder() {
+        return wonder;
     }
 
-    public void setWonderName(String wonderName) {
-        this.wonderName = wonderName;
-    }
-
-    public String getWonderSide() {
-        return wonderSide;
-    }
-
-    public void setWonderSide(String wonderSide) {
-        this.wonderSide = wonderSide;
+    public void setWonder(WonderEntity wonder) {
+        this.wonder = wonder;
     }
 
     public Integer getWonderStage() {
@@ -257,5 +255,21 @@ public class PlayerStateEntity {
 
     public void setWonderCards(List<CardEntity> wonderCards) {
         this.wonderCards = wonderCards;
+    }
+
+    public PlayerStateEntity getLeftNeighbor() {
+        return leftNeighbor;
+    }
+
+    public void setLeftNeighbor(PlayerStateEntity leftNeighbor) {
+        this.leftNeighbor = leftNeighbor;
+    }
+
+    public PlayerStateEntity getRightNeighbor() {
+        return rightNeighbor;
+    }
+
+    public void setRightNeighbor(PlayerStateEntity rightNeighbor) {
+        this.rightNeighbor = rightNeighbor;
     }
 }

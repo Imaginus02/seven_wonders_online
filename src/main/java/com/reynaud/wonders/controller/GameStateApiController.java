@@ -4,6 +4,8 @@ import com.reynaud.wonders.entity.CardEntity;
 import com.reynaud.wonders.entity.GameEntity;
 import com.reynaud.wonders.entity.PlayerStateEntity;
 import com.reynaud.wonders.entity.UserEntity;
+import com.reynaud.wonders.entity.WonderEntity;
+import com.reynaud.wonders.service.CardActionService;
 import com.reynaud.wonders.service.CardService;
 import com.reynaud.wonders.service.GameService;
 import com.reynaud.wonders.service.PlayerStateService;
@@ -15,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,13 +31,16 @@ public class GameStateApiController {
     private final CardService cardService;
     private final PlayerStateService playerStateService;
     private final UserService userService;
+    private final CardActionService cardActionService;
 
     public GameStateApiController(GameService gameService, CardService cardService,
-                                  PlayerStateService playerStateService, UserService userService) {
+                                  PlayerStateService playerStateService, UserService userService,
+                                  CardActionService cardActionService) {
         this.gameService = gameService;
         this.cardService = cardService;
         this.playerStateService = playerStateService;
         this.userService = userService;
+        this.cardActionService = cardActionService;
     }
 
     /**
@@ -90,10 +96,13 @@ public class GameStateApiController {
             return ResponseEntity.notFound().build();
         }
 
-        String wonderImage = generateWonderImageName(playerState.getWonderName(), playerState.getWonderSide());
+        WonderEntity wonder = playerState.getWonder();
+        if (wonder == null) {
+            return ResponseEntity.notFound().build();
+        }
         
         Map<String, String> response = new HashMap<>();
-        response.put("wonderImage", wonderImage);
+        response.put("wonderImage", wonder.getImage());
         return ResponseEntity.ok(response);
     }
 
@@ -285,7 +294,11 @@ public class GameStateApiController {
             return ResponseEntity.notFound().build();
         }
 
-        String wonderImage = generateWonderImageName(playerState.getWonderName(), playerState.getWonderSide());
+        WonderEntity wonder = playerState.getWonder();
+        if (wonder == null) {
+            return ResponseEntity.notFound().build();
+        }
+
         List<String> playedCards = playerState.getPlayedCards().stream()
                 .map(CardEntity::getImage)
                 .collect(Collectors.toList());
@@ -296,7 +309,7 @@ public class GameStateApiController {
                 .collect(Collectors.toList());
         
         Map<String, Object> response = new HashMap<>();
-        response.put("wonderImage", wonderImage);
+        response.put("wonderImage", wonder.getImage());
         response.put("coins", playerState.getCoins());
         response.put("playedCards", playedCards);
         response.put("cardBacks", cardBacks);
@@ -342,6 +355,13 @@ public class GameStateApiController {
             return ((BodyBuilder) ResponseEntity.notFound()).body(errorResponse);
         }
 
+        GameEntity game = gameService.getGameById(gameId);
+        if (game == null) {
+            Map<String, Boolean> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            return ((BodyBuilder) ResponseEntity.notFound()).body(errorResponse);
+        }
+
         // Find the card in the player's hand by image name
         CardEntity cardToPlay = playerState.getHand().stream()
                 .filter(card -> cardImage.equals(card.getImage()))
@@ -354,46 +374,31 @@ public class GameStateApiController {
             return ResponseEntity.badRequest().body(errorResponse);
         }
 
-        // TODO: Implement actual game logic for each action type
-        // For now, just remove the card from hand
+        System.out.println("Processing action: " + action + " for card: " + cardToPlay.getName() + " by player: " + user.getUsername());
+
+        // Delegate to service for business logic
+        boolean actionSuccess = false;
         switch (action) {
             case "play":
-                // Add to played cards
-                playerState.getHand().remove(cardToPlay);
-                playerState.getPlayedCards().add(cardToPlay);
+                actionSuccess = cardActionService.playCard(playerState, cardToPlay);
                 break;
             case "build":
-                // Build wonder stage with this card (card goes under wonder)
-                playerState.getHand().remove(cardToPlay);
-                playerState.setWonderStage(playerState.getWonderStage() + 1);
-                // TODO: Apply wonder stage benefits
+                actionSuccess = cardActionService.buildWonderWithCard(playerState, cardToPlay);
                 break;
             case "discard":
-                // Add to discard pile and gain 3 coins
-                GameEntity game = gameService.getGameById(gameId);
-                playerState.getHand().remove(cardToPlay);
-                game.getDiscard().add(cardToPlay);
-                playerState.setCoins(playerState.getCoins() + 3);
-                gameService.updateGame(game);
+                cardActionService.discardCard(playerState, cardToPlay, game);
+                actionSuccess = true;
                 break;
         }
 
-        playerStateService.updatePlayerState(playerState);
+        if (actionSuccess) {
+            playerState.setHasPlayedThisTurn(true);
+            cardActionService.handleEndOfTurn(game, gameId, playerState);
+            playerStateService.updatePlayerState(playerState);
+        }
         
         Map<String, Boolean> response = new HashMap<>();
-        response.put("success", true);
+        response.put("success", actionSuccess);
         return ResponseEntity.ok(response);
-    }
-
-    /**
-     * Helper method to generate wonder image name from wonder name and side
-     */
-    private String generateWonderImageName(String wonderName, String wonderSide) {
-        if (wonderName == null || wonderName.isEmpty()) {
-            return "gizahA.png"; // default
-        }
-        // Convert wonder name to lowercase and add side
-        String cleanName = wonderName.toLowerCase().replaceAll("\\s+", "");
-        return cleanName + (wonderSide != null ? wonderSide : "A") + ".png";
     }
 }

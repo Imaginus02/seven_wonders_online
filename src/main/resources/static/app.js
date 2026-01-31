@@ -286,15 +286,36 @@ const buildBtn = document.getElementById("buildButton");
 const discardBtn = document.getElementById("discardButton");
 const cancelBtn = document.getElementById("cancelButton");
 
+// Function to get CSRF token and parameter name from meta tags
+function getCsrfTokenAndParam() {
+  const tokenMeta = document.querySelector('meta[name="_csrf"]');
+  const paramMeta = document.querySelector('meta[name="_csrf_parameter_name"]');
+  
+  const token = tokenMeta ? tokenMeta.getAttribute('content') : '';
+  const paramName = paramMeta ? paramMeta.getAttribute('content') : '_csrf';
+  
+  return { token, paramName };
+}
+
 // Function to send card action to API
 async function sendCardAction(action, cardName) {
   try {
-    const response = await fetch('/api/card-action', {
+    const { token, paramName } = getCsrfTokenAndParam();
+    
+    // Build URL with CSRF token as query parameter
+    let url = '/api/card-action';
+    if (token) {
+      url += `?${paramName}=${encodeURIComponent(token)}`;
+      console.log(`[CSRF] Using query parameter '${paramName}' with token`);
+    }
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, card: cardName, gameId: parseInt(gameId) })
     });
     const data = await response.json();
+    console.log(`[API] Card action response (${action} - ${cardName}):`, data);
     return data;
   } catch (error) {
     console.error('Error sending card action:', error);

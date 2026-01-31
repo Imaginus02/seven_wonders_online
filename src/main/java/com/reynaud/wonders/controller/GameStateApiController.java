@@ -5,8 +5,9 @@ import com.reynaud.wonders.entity.GameEntity;
 import com.reynaud.wonders.entity.PlayerStateEntity;
 import com.reynaud.wonders.entity.UserEntity;
 import com.reynaud.wonders.entity.WonderEntity;
-import com.reynaud.wonders.service.CardActionService;
-import com.reynaud.wonders.service.CardService;
+import com.reynaud.wonders.manager.CardPlayManager;
+import com.reynaud.wonders.manager.TurnManager;
+import com.reynaud.wonders.manager.WonderBuildManager;
 import com.reynaud.wonders.service.GameService;
 import com.reynaud.wonders.service.PlayerStateService;
 import com.reynaud.wonders.service.UserService;
@@ -17,7 +18,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,19 +28,21 @@ import java.util.stream.Collectors;
 public class GameStateApiController {
 
     private final GameService gameService;
-    private final CardService cardService;
     private final PlayerStateService playerStateService;
     private final UserService userService;
-    private final CardActionService cardActionService;
+    private final CardPlayManager cardPlayManager;
+    private final WonderBuildManager wonderBuildManager;
+    private final TurnManager turnManager;
 
-    public GameStateApiController(GameService gameService, CardService cardService,
-                                  PlayerStateService playerStateService, UserService userService,
-                                  CardActionService cardActionService) {
+    public GameStateApiController(GameService gameService, PlayerStateService playerStateService,
+                                  UserService userService, CardPlayManager cardPlayManager,
+                                  WonderBuildManager wonderBuildManager, TurnManager turnManager) {
         this.gameService = gameService;
-        this.cardService = cardService;
         this.playerStateService = playerStateService;
         this.userService = userService;
-        this.cardActionService = cardActionService;
+        this.cardPlayManager = cardPlayManager;
+        this.wonderBuildManager = wonderBuildManager;
+        this.turnManager = turnManager;
     }
 
     /**
@@ -380,21 +382,23 @@ public class GameStateApiController {
         boolean actionSuccess = false;
         switch (action) {
             case "play":
-                actionSuccess = cardActionService.playCard(playerState, cardToPlay);
+                actionSuccess = cardPlayManager.playCard(playerState, cardToPlay);
                 break;
             case "build":
-                actionSuccess = cardActionService.buildWonderWithCard(playerState, cardToPlay);
+                actionSuccess = wonderBuildManager.buildWonderWithCard(playerState, cardToPlay);
                 break;
             case "discard":
-                cardActionService.discardCard(playerState, cardToPlay, game);
+                cardPlayManager.discardCard(playerState, cardToPlay, game.getDiscard());
+                gameService.updateGame(game);  // Persist game changes after discard
                 actionSuccess = true;
                 break;
         }
 
         if (actionSuccess) {
             playerState.setHasPlayedThisTurn(true);
-            cardActionService.handleEndOfTurn(game, gameId, playerState);
+            turnManager.handleEndOfTurn(game, gameId, playerState);
             playerStateService.updatePlayerState(playerState);
+            gameService.updateGame(game);  // Persist game changes after turn handling
         }
         
         Map<String, Boolean> response = new HashMap<>();

@@ -2,15 +2,12 @@ package com.reynaud.wonders.controller;
 
 import com.reynaud.wonders.dto.GameDTO;
 import com.reynaud.wonders.entity.GameEntity;
-import com.reynaud.wonders.entity.PlayerStateEntity;
 import com.reynaud.wonders.entity.UserEntity;
+import com.reynaud.wonders.manager.GameInitManager;
+import com.reynaud.wonders.manager.GameStateManager;
 import com.reynaud.wonders.model.GameStatus;
-import com.reynaud.wonders.service.CardActionService;
-import com.reynaud.wonders.service.CardService;
 import com.reynaud.wonders.service.GameService;
-import com.reynaud.wonders.service.PlayerStateService;
 import com.reynaud.wonders.service.UserService;
-import com.reynaud.wonders.service.WonderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -25,20 +22,16 @@ import java.util.List;
 public class GameController {
 
     private final GameService gameService;
+    private final GameInitManager gameInitManager;
+    private final GameStateManager gameStateManager;
     private final UserService userService;
-    private final PlayerStateService playerStateService;
-    private final CardService cardService;
-    private final WonderService wonderService;
-    private final CardActionService cardActionService;
 
-    public GameController(GameService gameService, UserService userService, PlayerStateService playerStateService,
-                          CardService cardService, WonderService wonderService, CardActionService cardActionService) {
+    public GameController(GameService gameService, GameInitManager gameInitManager,
+                          GameStateManager gameStateManager, UserService userService) {
         this.gameService = gameService;
+        this.gameInitManager = gameInitManager;
+        this.gameStateManager = gameStateManager;
         this.userService = userService;
-        this.playerStateService = playerStateService;
-        this.cardService = cardService;
-        this.wonderService = wonderService;
-        this.cardActionService = cardActionService;
     }
 
     // Web pages
@@ -103,8 +96,8 @@ public class GameController {
         }
 
         try {
-            // Setup game with all players and initialize game logic
-            GameEntity game = gameService.setupGameWithPlayers(playerIds);
+            // Start game with all players and initialize game logic
+            GameEntity game = gameInitManager.startGame(playerIds);
             return "redirect:/play?gameId=" + game.getId();
         } catch (Exception e) {
             model.addAttribute("error", "Error creating game: " + e.getMessage());
@@ -210,8 +203,12 @@ public class GameController {
         }
 
         try {
-            GameEntity game = gameService.startGame(id);
-            return ResponseEntity.ok(gameService.convertToDTO(game));
+            GameEntity game = gameService.getGameById(id);
+            if (game == null) {
+                return ResponseEntity.notFound().build();
+            }
+            GameEntity startedGame = gameStateManager.startGame(game);
+            return ResponseEntity.ok(gameService.convertToDTO(startedGame));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         } catch (IllegalStateException e) {
@@ -227,8 +224,12 @@ public class GameController {
         }
 
         try {
-            GameEntity game = gameService.cancelGame(id);
-            return ResponseEntity.ok(gameService.convertToDTO(game));
+            GameEntity game = gameService.getGameById(id);
+            if (game == null) {
+                return ResponseEntity.notFound().build();
+            }
+            GameEntity cancelledGame = gameStateManager.cancelGame(game);
+            return ResponseEntity.ok(gameService.convertToDTO(cancelledGame));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }

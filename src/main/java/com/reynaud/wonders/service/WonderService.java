@@ -1,6 +1,5 @@
 package com.reynaud.wonders.service;
 
-import com.reynaud.wonders.dao.PlayerStateDAO;
 import com.reynaud.wonders.dao.WonderDAO;
 import com.reynaud.wonders.dto.WonderDTO;
 import com.reynaud.wonders.entity.GameEntity;
@@ -20,11 +19,11 @@ import java.util.stream.Collectors;
 public class WonderService {
 
     private final WonderDAO wonderDAO;
-    private final PlayerStateDAO playerStateDAO;
+    private final PlayerStateService playerStateService;
 
-    public WonderService(WonderDAO wonderDAO, PlayerStateDAO playerStateDAO) {
+    public WonderService(WonderDAO wonderDAO, PlayerStateService playerStateService) {
         this.wonderDAO = wonderDAO;
-        this.playerStateDAO = playerStateDAO;
+        this.playerStateService = playerStateService;
     }
 
     @Transactional(readOnly = true)
@@ -115,8 +114,8 @@ public class WonderService {
     @Transactional
     public void handleGameCreation(GameEntity game) {
         System.out.println("Assigning wonders to players for game ID: " + game.getId());
-        // Fetch player states directly within this transaction to ensure they're managed
-        List<PlayerStateEntity> playerStates = playerStateDAO.findByGameId(game.getId());
+        // Fetch player states through PlayerStateService following proper service boundaries
+        List<PlayerStateEntity> playerStates = playerStateService.getPlayerStatesByGameId(game.getId());
         if (playerStates == null || playerStates.isEmpty()) {
             return;
         }
@@ -138,7 +137,9 @@ public class WonderService {
             
             playerStates.get(i).setWonder(selectedWonder);
             playerStates.get(i).setWonderStage(0);
+            
+            // Use PlayerStateService to update following proper service boundaries
+            playerStateService.updatePlayerState(playerStates.get(i));
         }
-        // Changes to managed entities are automatically persisted at transaction commit
     }
 }

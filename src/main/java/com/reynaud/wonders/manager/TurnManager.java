@@ -3,6 +3,7 @@ package com.reynaud.wonders.manager;
 import com.reynaud.wonders.entity.GameEntity;
 import com.reynaud.wonders.entity.PlayerStateEntity;
 import com.reynaud.wonders.model.Age;
+import com.reynaud.wonders.service.LoggingService;
 import com.reynaud.wonders.service.PlayerStateService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +17,13 @@ public class TurnManager {
 
     private final PlayerStateService playerStateService;
     private final CardDistributionManager cardDistributionManager;
+    private final LoggingService loggingService;
 
-    public TurnManager(PlayerStateService playerStateService, CardDistributionManager cardDistributionManager) {
+    public TurnManager(PlayerStateService playerStateService, CardDistributionManager cardDistributionManager,
+                       LoggingService loggingService) {
         this.playerStateService = playerStateService;
         this.cardDistributionManager = cardDistributionManager;
+        this.loggingService = loggingService;
     }
 
     /**
@@ -35,28 +39,28 @@ public class TurnManager {
     @Transactional
     public void handleEndOfTurn(GameEntity game, Long gameId, PlayerStateEntity playerState) {
         int remainingCards = playerState.getHand().size();
-        System.out.println("[TurnManager.handleEndOfTurn] GameId: " + gameId + ", Player: " + playerState.getUser().getUsername() + ", Remaining cards: " + remainingCards + ", Current age: " + game.getCurrentAge());
+        loggingService.debug("End of turn check - GameID: " + gameId + ", Player: " + playerState.getUser().getUsername() + ", RemainingCards: " + remainingCards + ", CurrentAge: " + game.getCurrentAge(), "TurnManager.handleEndOfTurn");
         
         if (playerStateService.allPlayersHavePlayedThisTurn(gameId)) {
-            System.out.println("[TurnManager.handleEndOfTurn] All players have played this turn");
+            loggingService.info("All players completed turn - GameID: " + gameId + ", CurrentAge: " + game.getCurrentAge(), "TurnManager.handleEndOfTurn");
             // Reset for next turn
-            System.out.println("[TurnManager.handleEndOfTurn] Resetting hasPlayedThisTurn for all players");
+            loggingService.debug("Resetting turn flags for all players - GameID: " + gameId, "TurnManager.handleEndOfTurn");
             for (PlayerStateEntity ps : playerStateService.getPlayerStatesByGameId(gameId)) {
                 ps.setHasPlayedThisTurn(false);
             }
             
             if (remainingCards == 1) {
                 // Last card of the round - discard it and move to next age
-                System.out.println("[TurnManager.handleEndOfTurn] Last card in hand - discarding and moving to next age");
+                loggingService.info("Last card in hand - discarding and moving to next age - GameID: " + gameId + ", CurrentAge: " + game.getCurrentAge(), "TurnManager.handleEndOfTurn");
                 for (PlayerStateEntity ps : playerStateService.getPlayerStatesByGameId(gameId)) {
                     game.getDiscard().add(ps.getHand().remove(0));
                 }
                 game.setCurrentAge(Age.getNextAge(game.getCurrentAge()));
-                System.out.println("[TurnManager.handleEndOfTurn] New age: " + game.getCurrentAge());
+                loggingService.info("Age advanced - GameID: " + gameId + ", NewAge: " + game.getCurrentAge(), "TurnManager.handleEndOfTurn");
                 
                 if (game.getCurrentAge() == null) {
                     // Game over - all ages completed
-                    System.out.println("[TurnManager.handleEndOfTurn] Game over - all ages completed");
+                    loggingService.info("Game complete - All ages finished - GameID: " + gameId, "TurnManager.handleEndOfTurn");
                     // TODO: Implement end game scoring and logic
                     return;
                 }
@@ -67,7 +71,7 @@ public class TurnManager {
                 boolean clockwise = game.getCurrentAge() == null
                         || game.getCurrentAge() == Age.AGE_I
                         || game.getCurrentAge() == Age.AGE_III;
-                System.out.println("[TurnManager.handleEndOfTurn] Rotating hands. Direction: " + (clockwise ? "clockwise" : "counter-clockwise") + ", New age: " + game.getCurrentAge());
+                loggingService.info("Rotating hands - GameID: " + gameId + ", Direction: " + (clockwise ? "clockwise" : "counter-clockwise") + ", NewAge: " + game.getCurrentAge(), "TurnManager.handleEndOfTurn");
                 cardDistributionManager.rotateHands(playerStateService.getPlayerStatesByGameId(gameId), clockwise);
             }
             for (PlayerStateEntity ps : playerStateService.getPlayerStatesByGameId(gameId)) {

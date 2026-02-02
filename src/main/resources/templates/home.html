@@ -58,6 +58,12 @@
         .nav-link:hover {
             background-color: #0b7dda;
         }
+        .admin-link {
+            background-color: #9c27b0;
+        }
+        .admin-link:hover {
+            background-color: #7b1fa2;
+        }
     </style>
 </head>
 <body>
@@ -70,6 +76,7 @@
             <a href="/cards" class="nav-link">View Cards</a>
             <a href="/games" class="nav-link">View Games</a>
             <a href="/wonders" class="nav-link">View Wonders</a>
+            <a th:if="${isAdmin}" href="/admin/logs" class="nav-link admin-link">🔍 Admin Logs</a>
         </div>
         
         <form th:action="@{/logout}" method="post" style="margin-top: 20px;">

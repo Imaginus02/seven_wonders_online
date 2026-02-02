@@ -2,9 +2,8 @@ package com.reynaud.wonders.controller;
 
 import com.reynaud.wonders.dto.UserDTO;
 import com.reynaud.wonders.entity.UserEntity;
+import com.reynaud.wonders.service.LoggingService;
 import com.reynaud.wonders.service.UserService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -17,16 +16,18 @@ import jakarta.validation.Valid;
 
 @Controller
 public class RegistrationController {
-    private static final Logger log = LoggerFactory.getLogger(RegistrationController.class);
 
     private final UserService userService;
+    private final LoggingService loggingService;
 
-    public RegistrationController(UserService userService) {
+    public RegistrationController(UserService userService, LoggingService loggingService) {
         this.userService = userService;
+        this.loggingService = loggingService;
     }
 
     @GetMapping("/register")
     public String showRegistrationForm(Model model) {
+        loggingService.debug("Accessing registration page", "RegistrationController.showRegistrationForm");
         model.addAttribute("userDTO", new UserDTO());
         return "register";
     }
@@ -49,18 +50,18 @@ public class RegistrationController {
 
             // Register the user
             UserEntity registeredUser = userService.registerUser(userDTO);
-            log.info("Registered user id={} username={}", registeredUser.getId(), registeredUser.getUsername());
+            loggingService.info("User registered successfully - UserID: " + registeredUser.getId() + ", Username: " + registeredUser.getUsername(), "RegistrationController.registerUser");
             // Redirect to login page with success message
             redirectAttributes.addFlashAttribute("success", 
                 "Registration successful! Please log in.");
             return "redirect:/login";
             
         } catch (IllegalArgumentException e) {
-            log.warn("Registration validation failed for username={}: {}", userDTO.getUsername(), e.getMessage());
+            loggingService.warning("Registration validation failed - Username: " + userDTO.getUsername() + ", Error: " + e.getMessage(), "RegistrationController.registerUser");
             model.addAttribute("error", e.getMessage());
             return "register";
         } catch (Exception e) {
-            log.error("Unexpected error during registration for username={}", userDTO.getUsername(), e);
+            loggingService.error("Unexpected error during registration - Username: " + userDTO.getUsername() + ", Error: " + e.getMessage(), "RegistrationController.registerUser", e);
             model.addAttribute("error", "An error occurred during registration. Please try again.");
             return "register";
         }

@@ -5,6 +5,7 @@ import com.reynaud.wonders.entity.PlayerStateEntity;
 import com.reynaud.wonders.model.CardType;
 import com.reynaud.wonders.model.Ressources;
 import com.reynaud.wonders.model.Science;
+import com.reynaud.wonders.service.LoggingService;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,12 @@ import java.util.stream.Collectors;
 @Component
 public class CardPlayManager {
 
+    private final LoggingService loggingService;
+
+    public CardPlayManager(LoggingService loggingService) {
+        this.loggingService = loggingService;
+    }
+
     /**
      * Processes a card play action, moving the specified card from the player's hand to their played cards.
      * 
@@ -30,22 +37,22 @@ public class CardPlayManager {
      */
     @Transactional
     public boolean playCard(PlayerStateEntity playerState, CardEntity cardToPlay) {
-        System.out.println("[CardPlayManager.playCard] Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName() + ", Hand size: " + playerState.getHand().size());
+        loggingService.debug("Playing card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName() + ", HandSize: " + playerState.getHand().size(), "CardPlayManager.playCard");
         if (canPlayCard(playerState, cardToPlay)) {
             if (cardToPlay.getCoinCost() > 0) {
                 int currentCoins = playerState.getCoins();
                 playerState.setCoins(currentCoins - cardToPlay.getCoinCost());
-                System.out.println("[CardPlayManager.playCard] Paid coin cost: " + cardToPlay.getCoinCost() + ", Remaining coins: " + playerState.getCoins());
+                loggingService.debug("Paid coin cost - Player: " + playerState.getUser().getUsername() + ", CoinCost: " + cardToPlay.getCoinCost() + ", RemainingCoins: " + playerState.getCoins(), "CardPlayManager.playCard");
             } else {
                 payCost(playerState, cardToPlay.getCost());
             }
             playerState.getHand().remove(cardToPlay);
             playerState.getPlayedCards().add(cardToPlay);
             applyCardEffect(playerState, cardToPlay);
-            System.out.println("[CardPlayManager.playCard] SUCCESS - Card played. New hand size: " + playerState.getHand().size() + ", Played cards: " + playerState.getPlayedCards().size());
+            loggingService.info("Card played successfully - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName() + ", NewHandSize: " + playerState.getHand().size() + ", TotalPlayedCards: " + playerState.getPlayedCards().size(), "CardPlayManager.playCard");
             return true;
         } else {
-            System.out.println("[CardPlayManager.playCard] FAILED - Cannot afford card");
+            loggingService.warning("Cannot play card - Insufficient resources/coins - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.playCard");
             return false;
         }
     }
@@ -58,7 +65,7 @@ public class CardPlayManager {
      * @param resourceCost the resource cost map to pay
      */
     public void payCost(PlayerStateEntity playerState, Map<Ressources, Integer> resourceCost) {
-        System.out.println("[CardPlayManager.payCost] Player: " + playerState.getUser().getUsername() + ", Cost: " + resourceCost);
+        loggingService.debug("Paying resource cost - Player: " + playerState.getUser().getUsername() + ", Cost: " + resourceCost, "CardPlayManager.payCost");
 
         Map<Ressources, Integer> playerRessources = playerState.getResources();
 
@@ -202,14 +209,14 @@ public class CardPlayManager {
         playerState.setCoins(playerState.getCoins() - totalCost);
         if (coinsToLeft > 0) {
             leftNeighbor.setCoins(leftNeighbor.getCoins() + coinsToLeft);
-            System.out.println("[CardPlayManager.payCost] Paid " + coinsToLeft + " coins to left neighbor");
+            loggingService.debug("Paid coins to left neighbor - Player: " + playerState.getUser().getUsername() + ", Amount: " + coinsToLeft + ", Neighbor: " + leftNeighbor.getUser().getUsername(), "CardPlayManager.payCost");
         }
         if (coinsToRight > 0) {
             rightNeighbor.setCoins(rightNeighbor.getCoins() + coinsToRight);
-            System.out.println("[CardPlayManager.payCost] Paid " + coinsToRight + " coins to right neighbor");
+            loggingService.debug("Paid coins to right neighbor - Player: " + playerState.getUser().getUsername() + ", Amount: " + coinsToRight + ", Neighbor: " + rightNeighbor.getUser().getUsername(), "CardPlayManager.payCost");
         }
 
-        System.out.println("[CardPlayManager.payCost] Total resource cost: " + totalCost + ", Remaining coins: " + playerState.getCoins());
+        loggingService.info("Resource cost paid - Player: " + playerState.getUser().getUsername() + ", TotalCost: " + totalCost + ", RemainingCoins: " + playerState.getCoins(), "CardPlayManager.payCost");
     }
 
     /**
@@ -237,13 +244,11 @@ public class CardPlayManager {
                         break;
                     case "Timber Yard":
                         //TODO: Add mutable wood/stone resource
-                        playerState.getResources().merge(Ressources.WOOD, 1, Integer::sum);
-                        playerState.getResources().merge(Ressources.STONE, 1, Integer::sum);
+                        playerState.getResources().merge(Ressources.STONE_WOOD, 1, Integer::sum);
                         break;
                     case "Clay Pit":
                         //TODO: Add mutable brick/ore resource
-                        playerState.getResources().merge(Ressources.BRICK, 1, Integer::sum);
-                        playerState.getResources().merge(Ressources.ORE, 1, Integer::sum);
+                        playerState.getResources().merge(Ressources.ORE_BRICK, 1, Integer::sum);
                         break;
                     
                     case "Sawmill":
@@ -509,15 +514,15 @@ public class CardPlayManager {
      * @return true if the player can afford the card cost, false otherwise
      */
     public boolean canPlayCard(PlayerStateEntity playerState, CardEntity cardToPlay) {
-        System.out.println("[CardPlayManager.canPlayCard] Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName() + ", CoinCost: " + cardToPlay.getCoinCost() + ", Player coins: " + playerState.getCoins());
+        loggingService.debug("Checking if card can be played - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName() + ", CoinCost: " + cardToPlay.getCoinCost() + ", PlayerCoins: " + playerState.getCoins(), "CardPlayManager.canPlayCard");
         //TODO: Add test if the player has already played the card earlier in the game
         if (cardToPlay.getCoinCost() == 0) { 
             boolean canAfford = canAffordCost(playerState, cardToPlay.getCost());
-            System.out.println("[CardPlayManager.canPlayCard] Resource cost check result: " + canAfford);
+            loggingService.debug("Resource cost check result - CanAfford: " + canAfford + ", Player: " + playerState.getUser().getUsername(), "CardPlayManager.canPlayCard");
             return canAfford;
         } else {
             boolean canAfford = cardToPlay.getCoinCost() <= playerState.getCoins();
-            System.out.println("[CardPlayManager.canPlayCard] Coin cost check result: " + canAfford);
+            loggingService.debug("Coin cost check result - CanAfford: " + canAfford + ", Player: " + playerState.getUser().getUsername(), "CardPlayManager.canPlayCard");
             return canAfford;
         }
     }
@@ -531,7 +536,7 @@ public class CardPlayManager {
      * @return true if the cost can be afforded, false otherwise
      */
     public boolean canAffordCost(PlayerStateEntity playerState, Map<Ressources, Integer> cardCost) {
-        System.out.println("[CardPlayManager.canAffordCost] Player: " + playerState.getUser().getUsername() + ", Card cost: " + cardCost + ", Player resources: " + playerState.getResources());
+        loggingService.debug("Checking resource affordability - Player: " + playerState.getUser().getUsername() + ", CardCost: " + cardCost + ", PlayerResources: " + playerState.getResources(), "CardPlayManager.canAffordCost");
         Map<Ressources, Integer> playerRessources = playerState.getResources();
 
         // Step 1: Calculate missing resources after using player's own resources
@@ -660,7 +665,7 @@ public class CardPlayManager {
         }
         
         boolean result = canBuyAllResources && minimumCost <= playerState.getCoins();
-        System.out.println("[CardPlayManager.canAffordCost] Result: " + result + ", Can buy all: " + canBuyAllResources + ", Minimum cost: " + minimumCost + ", Player coins: " + playerState.getCoins());
+        loggingService.debug("Affordability check result - Player: " + playerState.getUser().getUsername() + ", CanAfford: " + result + ", CanBuyAll: " + canBuyAllResources + ", MinimumCost: " + minimumCost + ", PlayerCoins: " + playerState.getCoins(), "CardPlayManager.canAffordCost");
         return result;
     }
 
@@ -685,10 +690,10 @@ public class CardPlayManager {
      */
     @Transactional
     public void discardCard(PlayerStateEntity playerState, CardEntity cardToDiscard, java.util.List<CardEntity> gameDiscard) {
-        System.out.println("[CardPlayManager.discardCard] Player: " + playerState.getUser().getUsername() + ", Card: " + cardToDiscard.getName() + ", Current coins: " + playerState.getCoins());
+        loggingService.debug("Discarding card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToDiscard.getName() + ", CurrentCoins: " + playerState.getCoins(), "CardPlayManager.discardCard");
         playerState.getHand().remove(cardToDiscard);
         gameDiscard.add(cardToDiscard);
         playerState.setCoins(playerState.getCoins() + 3);
-        System.out.println("[CardPlayManager.discardCard] SUCCESS - Card discarded. New coins: " + playerState.getCoins() + ", Discard pile size: " + gameDiscard.size());
+        loggingService.info("Card discarded successfully - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToDiscard.getName() + ", NewCoins: " + playerState.getCoins() + ", DiscardPileSize: " + gameDiscard.size(), "CardPlayManager.discardCard");
     }
 }

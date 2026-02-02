@@ -3,12 +3,15 @@ package com.reynaud.wonders;
 import org.junit.jupiter.api.Test;
 
 import com.reynaud.wonders.controller.LoginController;
+import com.reynaud.wonders.service.LoggingService;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class LoginControllerTest {
 
-    private LoginController loginController = new LoginController();
+    private LoggingService loggingService = mock(LoggingService.class);
+    private LoginController loginController = new LoginController(loggingService);
 
     @Test
     void testLoginPageDisplays() {

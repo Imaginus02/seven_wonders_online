@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Logs - 7 Wonders Online</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .badge {
+            background: #ff5722;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .badge.zero {
+            background: #4CAF50;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+
+        .checkbox-item label {
+            cursor: pointer;
+            margin: 0;
+            font-weight: 400;
+        }
+
+        .filter-section-title {
+            font-weight: 700;
+            color: #333;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .filters-divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 15px 0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #45a049;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+        }
+
+        .btn-secondary {
+            background: #757575;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #616161;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .logs-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .logs-header {
+            background: #f5f5f5;
+            padding: 15px 20px;
+            border-bottom: 2px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logs-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat strong {
+            color: #333;
+        }
+
+        .log-list {
+            max-height: calc(100vh - 400px);
+            overflow-y: auto;
+        }
+
+        .log-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .log-item:hover {
+            background: #f9f9f9;
+        }
+
+        .log-item.unread {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+        }
+
+        .log-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .log-meta {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .log-level {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .log-level.DEBUG {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .log-level.INFO {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .log-level.WARNING {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .log-level.ERROR {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .log-level.CRITICAL {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .log-source {
+            color: #666;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .log-timestamp {
+            color: #999;
+            font-size: 13px;
+        }
+
+        .log-id {
+            color: #bbb;
+            font-size: 12px;
+        }
+
+        .log-message {
+            color: #333;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .log-stacktrace {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #d32f2f;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .loading {
+            display: none;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+        }
+
+        .page-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+
+        .page-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #4CAF50;
+        }
+
+        .toggle-switch-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active .toggle-switch-slider {
+            transform: translateX(26px);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .log-header-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                🔍 System Logs
+            </h1>
+            <div class="header-actions">
+                <span class="badge" id="unreadBadge">0 unread</span>
+                <a href="/home" class="btn btn-secondary">← Back to Home</a>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="levelFilter">Log Level</label>
+                    <select id="levelFilter">
+                        <option value="ALL">All Levels</option>
+                        <option value="DEBUG">Debug</option>
+                        <option value="INFO">Info</option>
+                        <option value="WARNING">Warning</option>
+                        <option value="ERROR">Error</option>
+                        <option value="CRITICAL">Critical</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sourceFilter">Source</label>
+                    <input type="text" id="sourceFilter" placeholder="Filter by source...">
+                </div>
+
+                <div class="filter-group">
+                    <label for="minutesFilter">Time Range</label>
+                    <select id="minutesFilter">
+                        <option value="0">All Time</option>
+                        <option value="5">Last 5 minutes</option>
+                        <option value="15">Last 15 minutes</option>
+                        <option value="30" selected>Last 30 minutes</option>
+                        <option value="60">Last 1 hour</option>
+                        <option value="180">Last 3 hours</option>
+                        <option value="1440">Last 24 hours</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="unreadFilter">Status</label>
+                    <select id="unreadFilter">
+                        <option value="ALL">All Logs</option>
+                        <option value="UNREAD">Unread Only</option>
+                        <option value="READ">Read Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filters-divider"></div>
+
+            <div style="grid-column: 1 / -1;">
+                <div class="filter-section-title">🚫 Negative Filters (Exclude)</div>
+            </div>
+
+            <div class="filter-group">
+                <label>Exclude Log Levels</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="excludeDebug" value="DEBUG">
+                        <label for="excludeDebug">Debug</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="excludeInfo" value="INFO">
+                        <label for="excludeInfo">Info</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="excludeWarning" value="WARNING">
+                        <label for="excludeWarning">Warning</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="excludeError" value="ERROR">
+                        <label for="excludeError">Error</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="excludeCritical" value="CRITICAL">
+                        <label for="excludeCritical">Critical</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label for="excludeSourceFilter">Exclude Sources (comma-separated)</label>
+                <input type="text" id="excludeSourceFilter" placeholder="e.g., MyService,TestController...">
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="applyFilters()">
+                    🔍 Apply Filters
+                </button>
+                <button class="btn btn-success" onclick="markAllAsRead()">
+                    ✓ Mark All as Read
+                </button>
+                <button class="btn btn-danger" onclick="clearOldLogs()">
+                    🗑️ Clear Old Logs (30+ days)
+                </button>
+                <div class="auto-refresh">
+                    <label>Auto-refresh:</label>
+                    <div class="toggle-switch" id="autoRefreshToggle" onclick="toggleAutoRefresh()">
+                        <div class="toggle-switch-slider"></div>
+                    </div>
+                    <span id="refreshLabel">OFF</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="logs-container">
+            <div class="logs-header">
+                <div class="logs-stats">
+                    <div class="stat">
+                        <strong id="totalLogs">0</strong> total logs
+                    </div>
+                    <div class="stat">
+                        Page <strong id="currentPage">1</strong> of <strong id="totalPages">1</strong>
+                    </div>
+                </div>
+                <div>
+                    Last updated: <span id="lastUpdated">Never</span>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Loading logs...</p>
+            </div>
+
+            <div class="log-list" id="logList"></div>
+
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+        let autoRefreshInterval = null;
+        let currentFilters = {
+            level: 'ALL',
+            source: '',
+            minutes: 30,
+            unread: 'ALL',
+            excludeLevels: [],
+            excludeSources: []
+        };
+
+        // Load logs on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLogs();
+            updateUnreadCount();
+        });
+
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('active', show);
+        }
+
+        async function loadLogs() {
+            showLoading(true);
+            
+            try {
+                let url = '/api/admin/logs?page=' + currentPage;
+                
+                // Apply positive filters
+                if (currentFilters.level !== 'ALL' && currentFilters.level) {
+                    url = '/api/admin/logs/level/' + currentFilters.level + '?page=' + currentPage;
+                }
+                
+                if (currentFilters.source) {
+                    url = '/api/admin/logs/source/' + encodeURIComponent(currentFilters.source) + '?page=' + currentPage;
+                }
+                
+                if (currentFilters.minutes > 0) {
+                    url = '/api/admin/logs/recent?minutes=' + currentFilters.minutes;
+                }
+                
+                if (currentFilters.unread === 'UNREAD') {
+                    url = '/api/admin/logs/unread';
+                }
+
+                // Add negative filters to URL
+                if (currentFilters.excludeLevels.length > 0) {
+                    const separator = url.includes('?') ? '&' : '?';
+                    url += separator + 'excludeLevels=' + currentFilters.excludeLevels.join(',');
+                }
+                
+                if (currentFilters.excludeSources.length > 0) {
+                    const separator = url.includes('?') ? '&' : '?';
+                    url += separator + 'excludeSources=' + currentFilters.excludeSources.map(encodeURIComponent).join(',');
+                }
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch logs');
+                }
+                
+                const data = await response.json();
+                displayLogs(data);
+                updatePagination(data);
+                updateLastUpdated();
+            } catch (error) {
+                console.error('Error loading logs:', error);
+                document.getElementById('logList').innerHTML = 
+                    '<div class="empty-state"><p>Error loading logs: ' + error.message + '</p></div>';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayLogs(data) {
+            const logList = document.getElementById('logList');
+            const logs = data.logs || [];
+            
+            if (logs.length === 0) {
+                logList.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p>No logs found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            logList.innerHTML = logs.map(log => `
+                <div class="log-item ${log.readByAdmin ? '' : 'unread'}" onclick="toggleLogDetails(${log.id})">
+                    <div class="log-header-row">
+                        <div class="log-meta">
+                            <span class="log-level ${log.logLevel}">${log.logLevel}</span>
+                            <span class="log-source">📦 ${log.source || 'Unknown'}</span>
+                            <span class="log-timestamp">🕒 ${formatTimestamp(log.timestamp)}</span>
+                        </div>
+                        <span class="log-id">#${log.id}</span>
+                    </div>
+                    <div class="log-message">${escapeHtml(log.message)}</div>
+                    ${log.stackTrace ? `<div class="log-stacktrace" style="display: none;" id="stack-${log.id}">${escapeHtml(log.stackTrace)}</div>` : ''}
+                </div>
+            `).join('');
+            
+            // Update stats
+            document.getElementById('totalLogs').textContent = data.totalElements || logs.length;
+            document.getElementById('currentPage').textContent = data.page || currentPage;
+            document.getElementById('totalPages').textContent = data.totalPages || 1;
+            totalPages = data.totalPages || 1;
+        }
+
+        function toggleLogDetails(logId) {
+            const stackTrace = document.getElementById('stack-' + logId);
+            if (stackTrace) {
+                stackTrace.style.display = stackTrace.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'Unknown';
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updatePagination(data) {
+            const pagination = document.getElementById('pagination');
+            const total = data.totalPages || 1;
+            
+            if (total <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            let html = `
+                <button class="page-btn" onclick="goToPage(1)" ${currentPage === 1 ? 'disabled' : ''}>« First</button>
+                <button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹ Prev</button>
+            `;
+            
+            // Show page numbers
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(total, currentPage + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            
+            html += `
+                <button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === total ? 'disabled' : ''}>Next ›</button>
+                <button class="page-btn" onclick="goToPage(${total})" ${currentPage === total ? 'disabled' : ''}>Last »</button>
+            `;
+            
+            pagination.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadLogs();
+        }
+
+        function applyFilters() {
+            currentFilters.level = document.getElementById('levelFilter').value;
+            currentFilters.source = document.getElementById('sourceFilter').value;
+            currentFilters.minutes = parseInt(document.getElementById('minutesFilter').value);
+            currentFilters.unread = document.getElementById('unreadFilter').value;
+            
+            // Collect excluded levels
+            currentFilters.excludeLevels = [];
+            ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'].forEach(level => {
+                if (document.getElementById('exclude' + level.charAt(0).toUpperCase() + level.slice(1).toLowerCase()).checked) {
+                    currentFilters.excludeLevels.push(level);
+                }
+            });
+            
+            // Collect excluded sources
+            const excludeSourcesInput = document.getElementById('excludeSourceFilter').value.trim();
+            currentFilters.excludeSources = excludeSourcesInput 
+                ? excludeSourcesInput.split(',').map(s => s.trim()).filter(s => s.length > 0)
+                : [];
+            
+            currentPage = 1;
+            loadLogs();
+        }
+
+        async function updateUnreadCount() {
+            try {
+                const response = await fetch('/api/admin/logs/unread-count');
+                const data = await response.json();
+                const count = data.unreadCount || 0;
+                const badge = document.getElementById('unreadBadge');
+                badge.textContent = count + ' unread';
+                badge.classList.toggle('zero', count === 0);
+            } catch (error) {
+                console.error('Error updating unread count:', error);
+            }
+        }
+
+        async function markAllAsRead() {
+            if (!confirm('Mark all logs as read?')) return;
+            
+            try {
+                const response = await fetch('/api/admin/logs/mark-all-read', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    alert('All logs marked as read!');
+                    loadLogs();
+                    updateUnreadCount();
+                } else {
+                    alert('Failed to mark logs as read');
+                }
+            } catch (error) {
+                console.error('Error marking logs as read:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function clearOldLogs() {
+            if (!confirm('Delete all logs older than 30 days? This cannot be undone!')) return;
+            
+            try {
+                const response = await fetch('/api/admin/logs/clear-old?days=30', {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    alert('Deleted ' + data.logsDeleted + ' old logs');
+                    loadLogs();
+                } else {
+                    alert('Failed to clear old logs');
+                }
+            } catch (error) {
+                console.error('Error clearing logs:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+
+        function toggleAutoRefresh() {
+            const toggle = document.getElementById('autoRefreshToggle');
+            const label = document.getElementById('refreshLabel');
+            
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                toggle.classList.remove('active');
+                label.textContent = 'OFF';
+            } else {
+                autoRefreshInterval = setInterval(() => {
+                    loadLogs();
+                    updateUnreadCount();
+                }, 10000); // Refresh every 10 seconds
+                toggle.classList.add('active');
+                label.textContent = 'ON (10s)';
+            }
+        }
+
+        function updateLastUpdated() {
+            const now = new Date();
+            document.getElementById('lastUpdated').textContent = now.toLocaleTimeString();
+        }
+    </script>
+</body>
+</html>

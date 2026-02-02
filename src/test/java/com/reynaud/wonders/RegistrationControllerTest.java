@@ -3,6 +3,7 @@ package com.reynaud.wonders;
 import com.reynaud.wonders.controller.RegistrationController;
 import com.reynaud.wonders.dto.UserDTO;
 import com.reynaud.wonders.entity.UserEntity;
+import com.reynaud.wonders.service.LoggingService;
 import com.reynaud.wonders.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,11 +20,13 @@ class RegistrationControllerTest {
 
     private RegistrationController registrationController;
     private UserService userService;
+    private LoggingService loggingService;
 
     @BeforeEach
     void setUp() {
         userService = mock(UserService.class);
-        registrationController = new RegistrationController(userService);
+        loggingService = mock(LoggingService.class);
+        registrationController = new RegistrationController(userService, loggingService);
     }
 
     @Test

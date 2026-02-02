@@ -15,19 +15,25 @@ import java.util.stream.Collectors;
 public class PlayerStateService {
 
     private final PlayerStateDAO playerStateDAO;
+    private final LoggingService loggingService;
 
-    public PlayerStateService(PlayerStateDAO playerStateDAO) {
+    public PlayerStateService(PlayerStateDAO playerStateDAO, LoggingService loggingService) {
         this.playerStateDAO = playerStateDAO;
+        this.loggingService = loggingService;
     }
 
     @Transactional
     public PlayerStateEntity createPlayerState(GameEntity game, UserEntity user, Integer position) {
+        loggingService.info("Creating player state - GameID: " + game.getId() + ", UserID: " + user.getId() + ", Username: " + user.getUsername() + ", Position: " + position, "PlayerStateService.createPlayerState");
         PlayerStateEntity playerState = new PlayerStateEntity(game, user, position);
-        return playerStateDAO.save(playerState);
+        PlayerStateEntity savedState = playerStateDAO.save(playerState);
+        loggingService.info("Player state created successfully - PlayerStateID: " + savedState.getId() + ", GameID: " + game.getId() + ", Username: " + user.getUsername(), "PlayerStateService.createPlayerState");
+        return savedState;
     }
 
     @Transactional
     public PlayerStateEntity updatePlayerState(PlayerStateEntity playerState) {
+        loggingService.debug("Updating player state - PlayerStateID: " + playerState.getId() + ", Username: " + playerState.getUser().getUsername() + ", GameID: " + playerState.getGame().getId(), "PlayerStateService.updatePlayerState");
         return playerStateDAO.save(playerState);
     }
 

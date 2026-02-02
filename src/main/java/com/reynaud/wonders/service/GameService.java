@@ -21,10 +21,12 @@ public class GameService {
 
     private final GameDAO gameDAO;
     private final PlayerStateService playerStateService;
+    private final LoggingService loggingService;
 
-    public GameService(GameDAO gameDAO, PlayerStateService playerStateService) {
+    public GameService(GameDAO gameDAO, PlayerStateService playerStateService, LoggingService loggingService) {
         this.gameDAO = gameDAO;
         this.playerStateService = playerStateService;
+        this.loggingService = loggingService;
     }
 
     @Transactional
@@ -36,10 +38,13 @@ public class GameService {
 
     @Transactional
     public GameEntity createGame(Integer nbrPlayers) {
+        loggingService.info("Creating new game - NumberOfPlayers: " + nbrPlayers, "GameService.createGame");
         GameEntity game = new GameEntity();
         game.setStatus(GameStatus.WAITING);
         game.setNbrPlayers(nbrPlayers);
-        return gameDAO.save(game);
+        GameEntity savedGame = gameDAO.save(game);
+        loggingService.info("Game created successfully - GameID: " + savedGame.getId() + ", Status: " + savedGame.getStatus() + ", NumberOfPlayers: " + nbrPlayers, "GameService.createGame");
+        return savedGame;
     }
 
     @Transactional
@@ -79,33 +84,44 @@ public class GameService {
 
     @Transactional
     public GameEntity addUserToGame(Long gameId, UserEntity user) {
+        loggingService.info("Adding user to game - GameID: " + gameId + ", UserID: " + user.getId() + ", Username: " + user.getUsername(), "GameService.addUserToGame");
         GameEntity game = getGameById(gameId);
         if (game == null) {
+            loggingService.error("Cannot add user to game - Game not found - GameID: " + gameId, "GameService.addUserToGame");
             throw new IllegalArgumentException("Game not found");
         }
 
         if (game.getStatus() != GameStatus.WAITING) {
+            loggingService.error("Cannot add user to game - Game already started - GameID: " + gameId + ", Status: " + game.getStatus(), "GameService.addUserToGame");
             throw new IllegalStateException("Game has already started");
         }
 
         game.addUser(user);
-        return gameDAO.save(game);
+        GameEntity savedGame = gameDAO.save(game);
+        loggingService.info("User added to game successfully - GameID: " + gameId + ", UserID: " + user.getId() + ", TotalPlayers: " + savedGame.getUsers().size(), "GameService.addUserToGame");
+        return savedGame;
     }
 
     @Transactional
     public GameEntity removeUserFromGame(Long gameId, UserEntity user) {
+        loggingService.info("Removing user from game - GameID: " + gameId + ", UserID: " + user.getId() + ", Username: " + user.getUsername(), "GameService.removeUserFromGame");
         GameEntity game = getGameById(gameId);
         if (game == null) {
+            loggingService.error("Cannot remove user from game - Game not found - GameID: " + gameId, "GameService.removeUserFromGame");
             throw new IllegalArgumentException("Game not found");
         }
 
         game.removeUser(user);
-        return gameDAO.save(game);
+        GameEntity savedGame = gameDAO.save(game);
+        loggingService.info("User removed from game successfully - GameID: " + gameId + ", UserID: " + user.getId() + ", RemainingPlayers: " + savedGame.getUsers().size(), "GameService.removeUserFromGame");
+        return savedGame;
     }
 
     @Transactional
     public void deleteGame(Long id) {
+        loggingService.info("Deleting game - GameID: " + id, "GameService.deleteGame");
         gameDAO.deleteById(id);
+        loggingService.info("Game deleted successfully - GameID: " + id, "GameService.deleteGame");
     }
 
     /**
@@ -169,5 +185,9 @@ public class GameService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+
+	public boolean doesGameExist(Long gameId) {
+		return gameDAO.existsById(gameId); 
+	}
 }
 

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ui.Model;
 
 import com.reynaud.wonders.controller.HomeController;
+import com.reynaud.wonders.service.LoggingService;
 
 import org.springframework.security.core.Authentication;
 
@@ -12,7 +13,8 @@ import static org.mockito.Mockito.*;
 
 class HomeControllerTest {
 
-    private HomeController homeController = new HomeController();
+    private LoggingService loggingService = mock(LoggingService.class);
+    private HomeController homeController = new HomeController(loggingService);
 
     @Test
     void testHomeWithAuthenticatedUser() {

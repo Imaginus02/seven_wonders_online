@@ -20,10 +20,12 @@ public class WonderService {
 
     private final WonderDAO wonderDAO;
     private final PlayerStateService playerStateService;
+    private final LoggingService loggingService;
 
-    public WonderService(WonderDAO wonderDAO, PlayerStateService playerStateService) {
+    public WonderService(WonderDAO wonderDAO, PlayerStateService playerStateService, LoggingService loggingService) {
         this.wonderDAO = wonderDAO;
         this.playerStateService = playerStateService;
+        this.loggingService = loggingService;
     }
 
     @Transactional(readOnly = true)
@@ -113,12 +115,15 @@ public class WonderService {
      */
     @Transactional
     public void handleGameCreation(GameEntity game) {
-        System.out.println("Assigning wonders to players for game ID: " + game.getId());
+        loggingService.info("Assigning wonders to players - GameID: " + game.getId(), "WonderService.handleGameCreation");
         // Fetch player states through PlayerStateService following proper service boundaries
         List<PlayerStateEntity> playerStates = playerStateService.getPlayerStatesByGameId(game.getId());
         if (playerStates == null || playerStates.isEmpty()) {
+            loggingService.warning("No players found for wonder assignment - GameID: " + game.getId(), "WonderService.handleGameCreation");
             return;
         }
+
+        loggingService.debug("Found players for wonder assignment - GameID: " + game.getId() + ", PlayerCount: " + playerStates.size(), "WonderService.handleGameCreation");
 
         List<WonderEntity> allWonders = getAllWonders();
         // Group by name to get pairs (A and B sides)
@@ -138,8 +143,11 @@ public class WonderService {
             playerStates.get(i).setWonder(selectedWonder);
             playerStates.get(i).setWonderStage(0);
             
+            loggingService.info("Wonder assigned to player - Player: " + playerStates.get(i).getUser().getUsername() + ", Wonder: " + selectedWonder.getName() + ", Face: " + selectedWonder.getFace() + ", GameID: " + game.getId(), "WonderService.handleGameCreation");
+            
             // Use PlayerStateService to update following proper service boundaries
             playerStateService.updatePlayerState(playerStates.get(i));
         }
+        loggingService.info("Wonder assignment complete - GameID: " + game.getId() + ", TotalPlayers: " + playerStates.size(), "WonderService.handleGameCreation");
     }
 }

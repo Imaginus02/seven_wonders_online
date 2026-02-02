@@ -4,6 +4,7 @@ import com.reynaud.wonders.entity.CardEntity;
 import com.reynaud.wonders.entity.PlayerStateEntity;
 import com.reynaud.wonders.entity.WonderEntity;
 import com.reynaud.wonders.model.Ressources;
+import com.reynaud.wonders.service.LoggingService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,9 +18,11 @@ import java.util.Map;
 public class WonderBuildManager {
 
     private final CardPlayManager cardPlayManager;
+    private final LoggingService loggingService;
 
-    public WonderBuildManager(CardPlayManager cardPlayManager) {
+    public WonderBuildManager(CardPlayManager cardPlayManager, LoggingService loggingService) {
         this.cardPlayManager = cardPlayManager;
+        this.loggingService = loggingService;
     }
 
     /**
@@ -33,18 +36,18 @@ public class WonderBuildManager {
      */
     @Transactional
     public boolean buildWonderWithCard(PlayerStateEntity playerState, CardEntity cardToPlay) {
-        System.out.println("[WonderBuildManager.buildWonderWithCard] Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName() + ", Current wonder stage: " + playerState.getWonderStage() + ", Wonder: " + playerState.getWonder().getName());
+        loggingService.debug("Building wonder with card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName() + ", CurrentStage: " + playerState.getWonderStage() + ", Wonder: " + playerState.getWonder().getName(), "WonderBuildManager.buildWonderWithCard");
         if (canBuildWonderWithCard(playerState)) {
             Map<Ressources, Integer> wonderStageCost = playerState.getWonder().getStageCosts().get(playerState.getWonderStage());
             cardPlayManager.payCost(playerState, wonderStageCost);
             playerState.getHand().remove(cardToPlay);
             playerState.setWonderStage(playerState.getWonderStage() + 1);
             playerState.getWonderCards().add(cardToPlay);
-            System.out.println("[WonderBuildManager.buildWonderWithCard] SUCCESS - Wonder stage built. New stage: " + playerState.getWonderStage() + ", Wonder cards: " + playerState.getWonderCards().size());
+            loggingService.info("Wonder stage built successfully - Player: " + playerState.getUser().getUsername() + ", NewStage: " + playerState.getWonderStage() + ", WonderCards: " + playerState.getWonderCards().size() + ", Wonder: " + playerState.getWonder().getName(), "WonderBuildManager.buildWonderWithCard");
             // TODO: Apply wonder stage benefits
             return true;
         } else {
-            System.out.println("[WonderBuildManager.buildWonderWithCard] FAILED - Cannot build wonder stage");
+            loggingService.warning("Cannot build wonder stage - Player: " + playerState.getUser().getUsername() + ", Wonder: " + playerState.getWonder().getName() + ", Stage: " + playerState.getWonderStage(), "WonderBuildManager.buildWonderWithCard");
             return false;
         }
     }
@@ -58,10 +61,10 @@ public class WonderBuildManager {
     public boolean canBuildWonderWithCard(PlayerStateEntity playerState) {
         WonderEntity wonder = playerState.getWonder();
         Integer wonderStage = playerState.getWonderStage();
-        System.out.println("[WonderBuildManager.canBuildWonderWithCard] Player: " + playerState.getUser().getUsername() + ", Wonder: " + wonder.getName() + ", Current stage: " + wonderStage + ", Max stages: " + wonder.getNumberOfStages());
+        loggingService.debug("Checking if wonder can be built - Player: " + playerState.getUser().getUsername() + ", Wonder: " + wonder.getName() + ", CurrentStage: " + wonderStage + ", MaxStages: " + wonder.getNumberOfStages(), "WonderBuildManager.canBuildWonderWithCard");
 
         if (wonderStage >= wonder.getNumberOfStages() - 1) {
-            System.out.println("[WonderBuildManager.canBuildWonderWithCard] All stages already built");
+            loggingService.debug("All wonder stages already built - Player: " + playerState.getUser().getUsername() + ", Wonder: " + wonder.getName(), "WonderBuildManager.canBuildWonderWithCard");
             return false; // All stages already built
         }
 

@@ -112,7 +112,8 @@ INSERT INTO cards (name, type, age, cost, coin_cost, min_player_count, incoming_
 INSERT INTO users (username, password, role) VALUES
 ('alice', '{noop}password1', 'ROLE_USER'),
 ('bob', '{noop}password2', 'ROLE_USER'),
-('charlie', '{noop}password3', 'ROLE_USER');
+('charlie', '{noop}password3', 'ROLE_USER'),
+('admin', '{noop}demo', 'ROLE_ADMIN');
 
 INSERT INTO wonders (name, face, starting_resources, stage_costs, number_of_stages, image) VALUES
 -- Alexandria A

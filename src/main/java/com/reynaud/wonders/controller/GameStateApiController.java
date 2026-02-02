@@ -9,6 +9,7 @@ import com.reynaud.wonders.manager.CardPlayManager;
 import com.reynaud.wonders.manager.TurnManager;
 import com.reynaud.wonders.manager.WonderBuildManager;
 import com.reynaud.wonders.service.GameService;
+import com.reynaud.wonders.service.LoggingService;
 import com.reynaud.wonders.service.PlayerStateService;
 import com.reynaud.wonders.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -33,16 +34,19 @@ public class GameStateApiController {
     private final CardPlayManager cardPlayManager;
     private final WonderBuildManager wonderBuildManager;
     private final TurnManager turnManager;
+    private final LoggingService loggingService;
 
     public GameStateApiController(GameService gameService, PlayerStateService playerStateService,
                                   UserService userService, CardPlayManager cardPlayManager,
-                                  WonderBuildManager wonderBuildManager, TurnManager turnManager) {
+                                  WonderBuildManager wonderBuildManager, TurnManager turnManager,
+                                  LoggingService loggingService) {
         this.gameService = gameService;
         this.playerStateService = playerStateService;
         this.userService = userService;
         this.cardPlayManager = cardPlayManager;
         this.wonderBuildManager = wonderBuildManager;
         this.turnManager = turnManager;
+        this.loggingService = loggingService;
     }
 
     /**
@@ -53,7 +57,9 @@ public class GameStateApiController {
     public ResponseEntity<Map<String, List<String>>> getHand(
             @RequestParam Long gameId,
             Authentication authentication) {
+        loggingService.debug("API request - Get hand - GameID: " + gameId + ", User: " + (authentication != null ? authentication.getName() : "null"), "GameStateApiController.getHand");
         if (authentication == null) {
+            loggingService.warning("Unauthorized hand request - No authentication - GameID: " + gameId, "GameStateApiController.getHand");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -383,13 +389,14 @@ public class GameStateApiController {
         }
 
         if (playerState.getHasPlayedThisTurn()) {
+            loggingService.warning("Player already played this turn - GameID: " + gameId + ", User: " + user.getUsername(), "GameStateApiController.cardAction");
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "Player has already played this turn");
             return ResponseEntity.badRequest().body(errorResponse);
         }
 
-        System.out.println("Processing action: " + action + " for card: " + cardToPlay.getName() + " by player: " + user.getUsername());
+        loggingService.info("Processing card action - Action: " + action + ", Card: " + cardToPlay.getName() + ", Player: " + user.getUsername() + ", GameID: " + gameId, "GameStateApiController.cardAction");
 
         // Delegate to service for business logic
         boolean actionSuccess = false;
@@ -408,10 +415,13 @@ public class GameStateApiController {
         }
 
         if (actionSuccess) {
+            loggingService.info("Card action successful - Action: " + action + ", Card: " + cardToPlay.getName() + ", Player: " + user.getUsername() + ", GameID: " + gameId, "GameStateApiController.cardAction");
             playerState.setHasPlayedThisTurn(true);
             turnManager.handleEndOfTurn(game, gameId, playerState);
             playerStateService.updatePlayerState(playerState);
             gameService.updateGame(game);  // Persist game changes after turn handling
+        } else {
+            loggingService.warning("Card action failed - Action: " + action + ", Card: " + cardToPlay.getName() + ", Player: " + user.getUsername() + ", GameID: " + gameId, "GameStateApiController.cardAction");
         }
         
         Map<String, Object> response = new HashMap<>();

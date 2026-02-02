@@ -7,6 +7,7 @@ import com.reynaud.wonders.manager.GameInitManager;
 import com.reynaud.wonders.manager.GameStateManager;
 import com.reynaud.wonders.model.GameStatus;
 import com.reynaud.wonders.service.GameService;
+import com.reynaud.wonders.service.LoggingService;
 import com.reynaud.wonders.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,18 +26,22 @@ public class GameController {
     private final GameInitManager gameInitManager;
     private final GameStateManager gameStateManager;
     private final UserService userService;
+    private final LoggingService loggingService;
 
     public GameController(GameService gameService, GameInitManager gameInitManager,
-                          GameStateManager gameStateManager, UserService userService) {
+                          GameStateManager gameStateManager, UserService userService,
+                          LoggingService loggingService) {
         this.gameService = gameService;
         this.gameInitManager = gameInitManager;
         this.gameStateManager = gameStateManager;
         this.userService = userService;
+        this.loggingService = loggingService;
     }
 
     // Web pages
     @GetMapping
     public String gamesPage(Authentication authentication, Model model) {
+        loggingService.debug("Accessing games page - User: " + (authentication != null ? authentication.getName() : "not authenticated"), "GameController.gamesPage");
         if (authentication != null) {
             model.addAttribute("username", authentication.getName());
             List<GameEntity> availableGames = gameService.getAvailableGames();
@@ -48,11 +53,14 @@ public class GameController {
         }
         return "games";
     }
-
+    
+    //TODO: Fix this, error 500 while getting because of wonder
     @GetMapping("/{id}")
     public String gamePage(@PathVariable Long id, Authentication authentication, Model model) {
+        loggingService.debug("Accessing game page - GameID: " + id + ", User: " + (authentication != null ? authentication.getName() : "not authenticated"), "GameController.gamePage");
         GameEntity game = gameService.getGameById(id);
         if (game == null) {
+            loggingService.warning("Game not found - GameID: " + id, "GameController.gamePage");
             return "redirect:/games";
         }
 
@@ -65,7 +73,9 @@ public class GameController {
 
     @GetMapping("/create")
     public String createGamePage(Authentication authentication, Model model) {
+        loggingService.debug("Accessing create game page - User: " + (authentication != null ? authentication.getName() : "not authenticated"), "GameController.createGamePage");
         if (authentication == null) {
+            loggingService.warning("Unauthorized access to create game page", "GameController.createGamePage");
             return "redirect:/login";
         }
 
@@ -81,12 +91,15 @@ public class GameController {
             @RequestParam List<Long> playerIds,
             Authentication authentication,
             Model model) {
+        loggingService.info("Creating new game - User: " + (authentication != null ? authentication.getName() : "not authenticated") + ", PlayerIDs: " + playerIds, "GameController.submitCreateGame");
         if (authentication == null) {
+            loggingService.warning("Unauthorized game creation attempt", "GameController.submitCreateGame");
             return "redirect:/login";
         }
 
         // Validate player count
         if (playerIds == null || playerIds.size() < 3 || playerIds.size() > 7) {
+            loggingService.warning("Invalid player count for game creation - Count: " + (playerIds != null ? playerIds.size() : 0) + ", User: " + authentication.getName(), "GameController.submitCreateGame");
             model.addAttribute("error", "Please select between 3 and 7 players");
             List<UserEntity> allUsers = userService.getAllUsers();
             model.addAttribute("users", allUsers);
@@ -98,8 +111,10 @@ public class GameController {
         try {
             // Start game with all players and initialize game logic
             GameEntity game = gameInitManager.startGame(playerIds);
+            loggingService.info("Game created successfully - GameID: " + game.getId() + ", User: " + authentication.getName() + ", PlayerCount: " + playerIds.size(), "GameController.submitCreateGame");
             return "redirect:/play?gameId=" + game.getId();
         } catch (Exception e) {
+            loggingService.error("Error creating game - User: " + authentication.getName() + ", PlayerIDs: " + playerIds + ", Error: " + e.getMessage(), "GameController.submitCreateGame", e);
             model.addAttribute("error", "Error creating game: " + e.getMessage());
             List<UserEntity> allUsers = userService.getAllUsers();
             model.addAttribute("users", allUsers);
@@ -156,21 +171,27 @@ public class GameController {
     @PostMapping("/api/{id}/join")
     @ResponseBody
     public ResponseEntity<GameDTO> joinGame(@PathVariable Long id, Authentication authentication) {
+        loggingService.info("API request - Join game - GameID: " + id + ", User: " + (authentication != null ? authentication.getName() : "not authenticated"), "GameController.joinGame");
         if (authentication == null) {
+            loggingService.warning("Unauthorized join game attempt - GameID: " + id, "GameController.joinGame");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         UserEntity user = userService.findByUsername(authentication.getName());
         if (user == null) {
+            loggingService.warning("User not found for join game - Username: " + authentication.getName() + ", GameID: " + id, "GameController.joinGame");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         try {
             GameEntity game = gameService.addUserToGame(id, user);
+            loggingService.info("User joined game successfully - GameID: " + id + ", User: " + user.getUsername(), "GameController.joinGame");
             return ResponseEntity.ok(gameService.convertToDTO(game));
         } catch (IllegalArgumentException e) {
+            loggingService.error("Game not found for join - GameID: " + id + ", User: " + user.getUsername(), "GameController.joinGame");
             return ResponseEntity.notFound().build();
         } catch (IllegalStateException e) {
+            loggingService.error("Cannot join game - Game already started - GameID: " + id + ", User: " + user.getUsername(), "GameController.joinGame");
             return ResponseEntity.badRequest().build();
         }
     }

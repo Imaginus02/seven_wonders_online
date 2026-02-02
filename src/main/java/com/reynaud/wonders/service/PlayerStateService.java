@@ -87,7 +87,11 @@ public class PlayerStateService {
         dto.setCoins(entity.getCoins());
         dto.setMilitaryPoints(entity.getMilitaryPoints());
         dto.setVictoryPoints(entity.getVictoryPoints());
-        dto.setWonderId(entity.getWonder().getId());
+        if (entity.getWonder() != null) {
+            dto.setWonderId(entity.getWonder().getId());
+            dto.setWonderName(entity.getWonder().getName());
+            dto.setWonderSide(entity.getWonder().getFace());
+        }
         dto.setWonderStage(entity.getWonderStage());
         dto.setPlayedCardIds(entity.getPlayedCards().stream()
                 .map(card -> card.getId())

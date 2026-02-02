@@ -142,6 +142,7 @@ public class WonderService {
             
             playerStates.get(i).setWonder(selectedWonder);
             playerStates.get(i).setWonderStage(0);
+            playerStates.get(i).setResources(selectedWonder.getStartingResources());
             
             loggingService.info("Wonder assigned to player - Player: " + playerStates.get(i).getUser().getUsername() + ", Wonder: " + selectedWonder.getName() + ", Face: " + selectedWonder.getFace() + ", GameID: " + game.getId(), "WonderService.handleGameCreation");
             

@@ -46,3 +46,33 @@ async function loadDiscardedCards() {
   const discardedCards = await fetchDiscardedCardsFromAPI();
   renderDiscarded(discardedCards);
 }
+
+// Reload all game data from API
+async function reloadAllGameData() {
+  console.log('[Loader] Reloading all game data...');
+  
+  try {
+    // Reload hand cards
+    cards = await fetchCardsFromAPI();
+    renderHand();
+    
+    // Reload all parallel data
+    await Promise.all([
+      loadWonder(),
+      loadCardBacks(),
+      loadCoins(),
+      loadPlayedCards()
+    ]);
+    
+    // Reload discarded cards
+    await loadDiscardedCards();
+    
+    // Reload players list
+    const players = await fetchPlayersFromAPI();
+    renderPlayersList(players);
+    
+    console.log('[Loader] All game data reloaded successfully');
+  } catch (error) {
+    console.error('[Loader] Error reloading game data:', error);
+  }
+}

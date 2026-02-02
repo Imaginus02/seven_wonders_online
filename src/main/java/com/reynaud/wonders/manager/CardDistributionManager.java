@@ -46,29 +46,43 @@ public class CardDistributionManager {
         loggingService.info("Distributing cards - GameID: " + game.getId() + ", Age: " + game.getCurrentAge(), "CardDistributionManager.distributeCards");
         List<PlayerStateEntity> players = playerStateService.getPlayerStatesByGameId(game.getId());
         List<CardEntity> ageDeck = cardService.getCardsByAge(game.getCurrentAge());
-        int handSize = ageDeck.size() / players.size();
-        loggingService.debug("Card distribution details - Players: " + players.size() + ", DeckSize: " + ageDeck.size() + ", HandSize: " + handSize + ", GameID: " + game.getId(), "CardDistributionManager.distributeCards");
+        loggingService.debug("Initial deck size - DeckSize: " + ageDeck.size() + ", Players: " + players.size() + ", GameID: " + game.getId(), "CardDistributionManager.distributeCards");
+        
         ageDeck = ageDeck.stream()
                 .filter(card -> card.getMinPlayerCount() <= players.size())
                 .collect(Collectors.toList());
+        loggingService.debug("Deck size after player count filter - DeckSize: " + ageDeck.size() + ", GameID: " + game.getId(), "CardDistributionManager.distributeCards");
 
         if (game.getCurrentAge() == Age.AGE_III) {
             loggingService.debug("Age III detected - handling violet cards selection - GameID: " + game.getId(), "CardDistributionManager.distributeCards");
+            
+            ageDeck = ageDeck.stream()
+                    .filter(card -> card.getType() != CardType.VIOLET)
+                    .collect(Collectors.toList());
+            
             List<CardEntity> violetCards = ageDeck.stream()
                     .filter(card -> card.getType() == CardType.VIOLET)
                     .collect(Collectors.toList());
             Collections.shuffle(violetCards);
-            violetCards = violetCards.subList(0, players.size() + 2);
+            violetCards = violetCards.subList(0, ageDeck.size() - (players.size() * 7));
             loggingService.debug("Violet cards selected - Count: " + violetCards.size() + ", GameID: " + game.getId(), "CardDistributionManager.distributeCards");
             
-            ageDeck = ageDeck.stream()
-                    .filter(card -> card.getType() != CardType.VIOLET || card.getMinPlayerCount() <= players.size())
-                    .collect(Collectors.toList());
+            
             ageDeck.addAll(violetCards);
+            loggingService.debug("Deck size after violet cards handling - DeckSize: " + ageDeck.size() + ", GameID: " + game.getId(), "CardDistributionManager.distributeCards");
+        }
+        
+        int expectedTotalCards = players.size() * 7;
+        loggingService.debug("Final deck size validation - FinalDeckSize: " + ageDeck.size() + ", ExpectedCards: " + expectedTotalCards + ", Players: " + players.size() + ", GameID: " + game.getId(), "CardDistributionManager.distributeCards");
+        
+        if (ageDeck.size() != expectedTotalCards) {
+            loggingService.error("Invalid deck size for card distribution - DeckSize: " + ageDeck.size() + ", ExpectedCards: " + expectedTotalCards + ", Difference: " + (ageDeck.size() - expectedTotalCards) + ", Players: " + players.size() + ", Age: " + game.getCurrentAge() + ", GameID: " + game.getId(), "CardDistributionManager.distributeCards");
+            throw new IllegalStateException("Card distribution failed: expected " + expectedTotalCards + " cards but got " + ageDeck.size() + " cards (Age: " + game.getCurrentAge() + ", Players: " + players.size() + ", GameID: " + game.getId() + ")");
         }
         
         Collections.shuffle(ageDeck);
         loggingService.debug("Starting card distribution to players - GameID: " + game.getId(), "CardDistributionManager.distributeCards");
+        int handSize = 7;
         for (int i = 0; i < players.size(); i++) {
             List<CardEntity> hand = ageDeck.subList(i * handSize, (i + 1) * handSize);
             players.get(i).setHand(new ArrayList<>(hand));

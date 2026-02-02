@@ -243,11 +243,9 @@ public class CardPlayManager {
                         playerState.getResources().merge(Ressources.ORE, 1, Integer::sum);
                         break;
                     case "Timber Yard":
-                        //TODO: Add mutable wood/stone resource
                         playerState.getResources().merge(Ressources.STONE_WOOD, 1, Integer::sum);
                         break;
                     case "Clay Pit":
-                        //TODO: Add mutable brick/ore resource
                         playerState.getResources().merge(Ressources.ORE_BRICK, 1, Integer::sum);
                         break;
                     
@@ -264,6 +262,7 @@ public class CardPlayManager {
                         playerState.getResources().merge(Ressources.BRICK, 2, Integer::sum);
                         break;
                     default:
+                        loggingService.warning("No effect defined for brown card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
                         break;
                 }
                 break;
@@ -279,6 +278,7 @@ public class CardPlayManager {
                         playerState.getResources().merge(Ressources.TEXTILE, 1, Integer::sum);
                         break;                
                     default:
+                        loggingService.warning("No effect defined for grey card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
                         break;
                 }
                 break;
@@ -321,6 +321,7 @@ public class CardPlayManager {
                         playerState.setVictoryPoints(playerState.getVictoryPoints() + 8);
                         break;
                     default:
+                        loggingService.warning("No effect defined for blue card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
                         break;
                 }
                 break;
@@ -386,6 +387,7 @@ public class CardPlayManager {
                         // TODO: The addition of victory points should be done at the end of the game
                         break;
                     default:
+                        loggingService.warning("No effect defined for yellow card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
                         break;
                 }
                 break;
@@ -419,6 +421,7 @@ public class CardPlayManager {
                         playerState.setMilitaryPoints(playerState.getMilitaryPoints() + 3);
                         break;
                     default:
+                        loggingService.warning("No effect defined for red card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
                         break;
                 }
                 break;
@@ -461,6 +464,7 @@ public class CardPlayManager {
                         playerState.getScience().merge(Science.GEAR, 1, Integer::sum);
                         break;
                     default:
+                        loggingService.warning("No effect defined for green card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
                         break;
                 }
                 break;
@@ -497,6 +501,7 @@ public class CardPlayManager {
                         // TODO: 1 victory point per wonder stage (self + neighbors)
                         break;
                     default:
+                        loggingService.warning("No effect defined for violet card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
                         break;
                 }
                 break;
@@ -546,12 +551,14 @@ public class CardPlayManager {
                         Map.Entry::getKey,
                         entry -> Math.max(0, entry.getValue() - playerRessources.getOrDefault(entry.getKey(), 0))
                 ));
+        loggingService.debug("Step1 - Missing resources after own resources - Missing: " + missingResources + ", PlayerResources: " + playerRessources, "CardPlayManager.canAffordCost");
         
         // Step 2: Apply mutable resources (wildcards) to cover missing resources
         int missingBaseResources = calculateMissingResourceCount(missingResources, true)
                 - playerRessources.getOrDefault(Ressources.MUTABLE_BASE, 0);
         int missingAdvancedResources = calculateMissingResourceCount(missingResources, false)
                 - playerRessources.getOrDefault(Ressources.MUTABLE_ADVANCED, 0);
+        loggingService.debug("Step2 - Mutable resources applied (before pairs) - MissingBase: " + missingBaseResources + ", MissingAdvanced: " + missingAdvancedResources + ", MutableBase: " + playerRessources.getOrDefault(Ressources.MUTABLE_BASE, 0) + ", MutableAdvanced: " + playerRessources.getOrDefault(Ressources.MUTABLE_ADVANCED, 0), "CardPlayManager.canAffordCost");
         
         // Apply mutable pairs to remaining missing base resources
         for (Ressources mutablePair : Ressources.values()) {
@@ -565,12 +572,15 @@ public class CardPlayManager {
                             missingResources.put(option, missingResources.get(option) - usedPairs);
                             missingBaseResources -= usedPairs;
                             pairCount -= usedPairs;
+                            loggingService.debug("Step2 - Applied mutable pair - Pair: " + mutablePair + ", Option: " + option + ", Used: " + usedPairs + ", RemainingPairCount: " + pairCount + ", MissingBaseNow: " + missingBaseResources + ", MissingResourcesNow: " + missingResources, "CardPlayManager.canAffordCost");
                             if (pairCount == 0 || missingBaseResources <= 0) break;
                         }
                     }
                 }
             }
         }
+
+        loggingService.debug("Step2 - After mutable pairs - MissingResources: " + missingResources + ", MissingBase: " + missingBaseResources + ", MissingAdvanced: " + missingAdvancedResources, "CardPlayManager.canAffordCost");
 
         if (missingBaseResources <= 0 && missingAdvancedResources <= 0) {
             return true;
@@ -581,6 +591,7 @@ public class CardPlayManager {
         PlayerStateEntity rightNeighbor = playerState.getRightNeighbor();
         Map<Ressources, Integer> leftResources = leftNeighbor.getResources();
         Map<Ressources, Integer> rightResources = rightNeighbor.getResources();
+        loggingService.debug("Step3 - Neighbor resources - Left: " + leftResources + ", Right: " + rightResources, "CardPlayManager.canAffordCost");
         
         // Add mutable pairs as available resources from neighbors
         Map<Ressources, Integer> leftAvailableResources = new java.util.HashMap<>(leftResources);
@@ -598,12 +609,14 @@ public class CardPlayManager {
                 }
             }
         }
+        loggingService.debug("Step3 - Neighbor available resources (with pairs) - LeftAvailable: " + leftAvailableResources + ", RightAvailable: " + rightAvailableResources, "CardPlayManager.canAffordCost");
         
         // Get price multipliers for buying from neighbors
         int leftBasePrice = playerState.getLeftBaseRessourcePriceMultiplier();
         int rightBasePrice = playerState.getRightBaseRessourcePriceMultiplier();
         int leftAdvancedPrice = playerState.getLeftAdvancedRessourcePriceMultiplier();
         int rightAdvancedPrice = playerState.getRightAdvancedRessourcePriceMultiplier();
+        loggingService.debug("Step3 - Price multipliers - LeftBase: " + leftBasePrice + ", RightBase: " + rightBasePrice + ", LeftAdvanced: " + leftAdvancedPrice + ", RightAdvanced: " + rightAdvancedPrice, "CardPlayManager.canAffordCost");
         
         // Calculate minimum cost to buy missing resources
         int minimumCost = 0;
@@ -620,10 +633,13 @@ public class CardPlayManager {
             int availableFromLeft = leftAvailableResources.getOrDefault(resource, 0);
             int availableFromRight = rightAvailableResources.getOrDefault(resource, 0);
             int totalAvailableFromNeighbors = availableFromLeft + availableFromRight;
+
+            loggingService.debug("Step3 - Resource availability - Resource: " + resource + ", Needed: " + amountNeeded + ", LeftAvailable: " + availableFromLeft + ", RightAvailable: " + availableFromRight + ", TotalAvailable: " + totalAvailableFromNeighbors, "CardPlayManager.canAffordCost");
             
             // Check if neighbors can provide enough of this resource
             if (totalAvailableFromNeighbors < amountNeeded) {
                 canBuyAllResources = false;
+                loggingService.debug("Step3 - Not enough resources from neighbors - Resource: " + resource + ", Needed: " + amountNeeded + ", TotalAvailable: " + totalAvailableFromNeighbors, "CardPlayManager.canAffordCost");
                 break;
             }
             
@@ -638,6 +654,8 @@ public class CardPlayManager {
             } else {
                 continue; // Skip non-resource types
             }
+
+            loggingService.debug("Step3 - Resource pricing - Resource: " + resource + ", PriceLeft: " + priceFromLeft + ", PriceRight: " + priceFromRight, "CardPlayManager.canAffordCost");
             
             // Find the optimal way to buy this resource (greedy approach: buy from cheaper neighbor first)
             int remaining = amountNeeded;
@@ -646,25 +664,32 @@ public class CardPlayManager {
                 int buyFromLeft = Math.min(remaining, availableFromLeft);
                 minimumCost += buyFromLeft * priceFromLeft;
                 remaining -= buyFromLeft;
+
+                loggingService.debug("Step3 - Buy plan - Resource: " + resource + ", BuyFromLeft: " + buyFromLeft + ", Remaining: " + remaining + ", MinimumCost: " + minimumCost, "CardPlayManager.canAffordCost");
                 
                 // Buy remaining from right if needed
                 if (remaining > 0) {
                     minimumCost += remaining * priceFromRight;
+                    loggingService.debug("Step3 - Buy plan - Resource: " + resource + ", BuyFromRight: " + remaining + ", MinimumCost: " + minimumCost, "CardPlayManager.canAffordCost");
                 }
             } else {
                 // Buy from right first (cheaper)
                 int buyFromRight = Math.min(remaining, availableFromRight);
                 minimumCost += buyFromRight * priceFromRight;
                 remaining -= buyFromRight;
+
+                loggingService.debug("Step3 - Buy plan - Resource: " + resource + ", BuyFromRight: " + buyFromRight + ", Remaining: " + remaining + ", MinimumCost: " + minimumCost, "CardPlayManager.canAffordCost");
                 
                 // Buy remaining from left if needed
                 if (remaining > 0) {
                     minimumCost += remaining * priceFromLeft;
+                    loggingService.debug("Step3 - Buy plan - Resource: " + resource + ", BuyFromLeft: " + remaining + ", MinimumCost: " + minimumCost, "CardPlayManager.canAffordCost");
                 }
             }
         }
         
         boolean result = canBuyAllResources && minimumCost <= playerState.getCoins();
+        loggingService.debug("Step3 - Final cost evaluation - CanBuyAll: " + canBuyAllResources + ", MinimumCost: " + minimumCost + ", PlayerCoins: " + playerState.getCoins() + ", Result: " + result, "CardPlayManager.canAffordCost");
         loggingService.debug("Affordability check result - Player: " + playerState.getUser().getUsername() + ", CanAfford: " + result + ", CanBuyAll: " + canBuyAllResources + ", MinimumCost: " + minimumCost + ", PlayerCoins: " + playerState.getCoins(), "CardPlayManager.canAffordCost");
         return result;
     }

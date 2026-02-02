@@ -28,6 +28,8 @@ public class PlayerStateDTO {
     private Integer militaryPoints = 0;
     private Integer victoryPoints = 0;
     private Integer wonderStage = 0;
+    private String wonderName;
+    private String wonderSide;
     private List<Long> playedCardIds = new ArrayList<>();
     private Map<Ressources, Integer> resources = new EnumMap<>(Ressources.class);
     private Map<Science, Integer> science = new EnumMap<>(Science.class);
@@ -118,6 +120,22 @@ public class PlayerStateDTO {
 
     public void setVictoryPoints(Integer victoryPoints) {
         this.victoryPoints = victoryPoints;
+    }
+
+    public String getWonderName() {
+        return wonderName;
+    }
+
+    public void setWonderName(String wonderName) {
+        this.wonderName = wonderName;
+    }
+
+    public String getWonderSide() {
+        return wonderSide;
+    }
+
+    public void setWonderSide(String wonderSide) {
+        this.wonderSide = wonderSide;
     }
 
     public Long getWonderId() {

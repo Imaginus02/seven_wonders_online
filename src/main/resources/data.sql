@@ -8,8 +8,8 @@ INSERT INTO cards (name, type, age, cost, coin_cost, min_player_count, incoming_
 ('Clay Pool', 'BROWN', 'AGE_I', '{}', 0, 3, '[]', '[]', 'claypool.png'),
 ('Stone Pit', 'BROWN', 'AGE_I', '{}', 0, 3, '[]', '[]', 'stonepit.png'),
 ('Ore Vein', 'BROWN', 'AGE_I', '{}', 0, 3, '[]', '[]', 'orevein.png'),
-('Timber Yard', 'BROWN', 'AGE_I', '{}', 0, 3, '[]', '[]', 'timberyard.png'),
-('CLay Pit', 'BROWN', 'AGE_I', '{}', 0, 3, '[]', '[]', 'claypit.png'),
+('Timber Yard', 'BROWN', 'AGE_I', '{}', 1, 3, '[]', '[]', 'timberyard.png'),
+('Clay Pit', 'BROWN', 'AGE_I', '{}', 1, 3, '[]', '[]', 'claypit.png'),
 
 ('Sawmill', 'BROWN', 'AGE_II', '{}', 1, 3, '[]', '[]', 'sawmill.png'),
 ('Foundry', 'BROWN', 'AGE_II', '{}', 1, 3, '[]', '[]', 'foundry.png'),

@@ -26,6 +26,11 @@ async function checkHasPlayedThisTurn() {
     } else if (!hasPlayed && isBlockingTurn) {
       hideTurnBlockerOverlay();
       isBlockingTurn = false;
+      // Turn has changed - reload all game data
+      console.log('[TurnBlocker] Turn changed - reloading game data');
+      if (typeof reloadAllGameData === 'function') {
+        await reloadAllGameData();
+      }
     }
   } catch (error) {
     console.error('[TurnBlocker] Error checking hasPlayedThisTurn:', error);

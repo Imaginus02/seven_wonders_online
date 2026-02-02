@@ -4,6 +4,7 @@ import com.reynaud.wonders.entity.CardEntity;
 import com.reynaud.wonders.entity.PlayerStateEntity;
 import com.reynaud.wonders.entity.WonderEntity;
 import com.reynaud.wonders.model.Ressources;
+import com.reynaud.wonders.model.Science;
 import com.reynaud.wonders.service.LoggingService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,12 +44,245 @@ public class WonderBuildManager {
             playerState.getHand().remove(cardToPlay);
             playerState.setWonderStage(playerState.getWonderStage() + 1);
             playerState.getWonderCards().add(cardToPlay);
+
+            applyWonderStageBenefits(playerState);
             loggingService.info("Wonder stage built successfully - Player: " + playerState.getUser().getUsername() + ", NewStage: " + playerState.getWonderStage() + ", WonderCards: " + playerState.getWonderCards().size() + ", Wonder: " + playerState.getWonder().getName(), "WonderBuildManager.buildWonderWithCard");
-            // TODO: Apply wonder stage benefits
             return true;
         } else {
             loggingService.warning("Cannot build wonder stage - Player: " + playerState.getUser().getUsername() + ", Wonder: " + playerState.getWonder().getName() + ", Stage: " + playerState.getWonderStage(), "WonderBuildManager.buildWonderWithCard");
             return false;
+        }
+    }
+
+    private void applyWonderStageBenefits(PlayerStateEntity playerState) {
+        switch (playerState.getWonder().getName()) {
+            case "Alexandria":
+                switch (playerState.getWonder().getFace()) {
+                    case "A":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+3);
+                                break;
+                            case 2:
+                                playerState.getResources().merge(Ressources.MUTABLE_BASE, 1, Integer::sum);
+                                break;
+                            case 3:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+7);
+                                break;
+                        }
+                        break;
+                    case "B":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                playerState.getResources().merge(Ressources.MUTABLE_BASE, 1, Integer::sum);
+                                break;
+                            case 2:
+                                playerState.getResources().merge(Ressources.MUTABLE_ADVANCED, 1, Integer::sum);
+                                break;
+                            case 3:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+7);
+                                break;
+                        }
+                        break;
+                }
+                break;
+            case "Babylon":
+                switch (playerState.getWonder().getFace()) {
+                    case "A":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+3);
+                                break;
+                            case 2:
+                                playerState.getScience().merge(Science.MUTABLE, 1, Integer::sum);
+                                break;
+                            case 3:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+7);
+                                break;
+                        }
+                        break;
+                    case "B":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+3);
+                                break;
+                            case 2:
+                                //TODO: Handle playing the last two cards of the age at the end of the age
+                                loggingService.warning("Babylon B stage 2 benefit not implemented - Player: " + playerState.getUser().getUsername(), "WonderBuildManager.applyWonderStageBenefits");
+                                break;
+                            case 3:
+                                playerState.getScience().merge(Science.MUTABLE, 1, Integer::sum);
+                                break;
+                        }
+                        break;
+                }
+                break;
+            case "Ephesos":
+                switch (playerState.getWonder().getFace()) {
+                    case "A":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+3);
+                                break;
+                            case 2:
+                                playerState.setCoins(playerState.getCoins()+9);
+                                break;
+                            case 3:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+7);
+                                break;
+                        }
+                        break;
+                    case "B":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+2);
+                                playerState.setCoins(playerState.getCoins()+4);
+                                break;
+                            case 2:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+3);
+                                playerState.setCoins(playerState.getCoins()+4);
+                                break;
+                            case 3:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+5);
+                                playerState.setCoins(playerState.getCoins()+4);
+                                break;
+                        }
+                        break;
+                }
+                break;
+            case "Gizah":
+                switch (playerState.getWonder().getFace()) {
+                    case "A":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+3);
+                                break;
+                            case 2:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+5);
+                                break;
+                            case 3:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+7);
+                                break;
+                        }
+                        break;
+                    case "B":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+3);
+                                break;
+                            case 2:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+5);
+                                break;
+                            case 3:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+5);
+                                break;
+                            case 4:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+7);
+                                break;
+                        }
+                        break;
+                }
+                break;
+            case "Halikarnassos":
+                switch (playerState.getWonder().getFace()) {
+                    case "A":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+3);
+                                break;
+                            case 2:
+                                //TODO: Handle building a card freely from discard pile
+                                loggingService.warning("Halikarnassos A stage 2 benefit not implemented - Player: " + playerState.getUser().getUsername(), "WonderBuildManager.applyWonderStageBenefits");
+                                break;
+                            case 3:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+7);
+                                break;
+                        }
+                        break;
+                    case "B":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                //TODO: Handle building a card freely from discard pile
+                                loggingService.warning("Halikarnassos B stage 1 benefit not implemented - Player: " + playerState.getUser().getUsername(), "WonderBuildManager.applyWonderStageBenefits");
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+2);
+                                break;
+                            case 2:
+                                //TODO: Handle building a card freely from discard pile
+                                loggingService.warning("Halikarnassos B stage 2 benefit not implemented - Player: " + playerState.getUser().getUsername(), "WonderBuildManager.applyWonderStageBenefits");
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+1);
+                                break;
+                            case 3:
+                                //TODO: Handle building a card freely from discard pile
+                                loggingService.warning("Halikarnassos B stage 3 benefit not implemented - Player: " + playerState.getUser().getUsername(), "WonderBuildManager.applyWonderStageBenefits");
+                                break;
+                        }
+                        break;
+                }
+                break;
+            case "Olympia":
+                switch (playerState.getWonder().getFace()) {
+                    case "A":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+3);
+                                break;
+                            case 2:
+                                //TODO: Handle first card from each age is free
+                                loggingService.warning("Olympia A stage 2 benefit not implemented - Player: " + playerState.getUser().getUsername(), "WonderBuildManager.applyWonderStageBenefits");
+                                break;
+                            case 3:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+7);
+                                break;
+                        }
+                        break;
+                    case "B":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                playerState.setLeftBaseRessourcePriceMultiplier(1);
+                                playerState.setRightBaseRessourcePriceMultiplier(1);
+                                break;
+                            case 2:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+5);
+                                break;
+                            case 3:
+                                //TODO: Handle copying a violet card from a neighbor at the end of the game
+                                loggingService.warning("Olympia B stage 3 benefit not implemented - Player: " + playerState.getUser().getUsername(), "WonderBuildManager.applyWonderStageBenefits");
+                                break;
+                        }
+                        break;
+                }
+                break;
+            case "Rhodes":
+                switch (playerState.getWonder().getFace()) {
+                    case "A":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+3);
+                                break;
+                            case 2:
+                                playerState.setMilitaryPoints(playerState.getMilitaryPoints()+2);
+                                break;
+                            case 3:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+7);
+                                break;
+                        }
+                        break;
+                    case "B":
+                        switch (playerState.getWonderStage()) {
+                            case 1:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+3);
+                                playerState.setCoins(playerState.getCoins()+3);
+                                playerState.setMilitaryPoints(playerState.getMilitaryPoints()+1);
+                                break;
+                            case 2:
+                                playerState.setVictoryPoints(playerState.getVictoryPoints()+4);
+                                playerState.setCoins(playerState.getCoins()+4);
+                                playerState.setMilitaryPoints(playerState.getMilitaryPoints()+1);
+                                break;
+                        }
+                        break;
+                }
+                break;
         }
     }
 

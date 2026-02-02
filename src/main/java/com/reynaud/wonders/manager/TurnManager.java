@@ -66,8 +66,6 @@ public class TurnManager {
                 }
                 cardDistributionManager.distributeCards(game);
             } else if (remainingCards >= 2) {
-                // Advance to next age and rotate hands
-                game.setCurrentAge(Age.getNextAge(game.getCurrentAge()));
                 boolean clockwise = game.getCurrentAge() == null
                         || game.getCurrentAge() == Age.AGE_I
                         || game.getCurrentAge() == Age.AGE_III;

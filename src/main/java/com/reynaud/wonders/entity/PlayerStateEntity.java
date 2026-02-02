@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.reynaud.wonders.model.Ressources;
+import com.reynaud.wonders.model.Science;
 
 @Entity
 @Table(name = "player_states")
@@ -60,21 +61,24 @@ public class PlayerStateEntity {
     @Convert(converter = RessourceCostConverter.class)
     private Map<Ressources, Integer> resources = new EnumMap<>(Ressources.class);
 
-    // Science symbols count
-    @Column(name = "science_tablets")
-    private Integer scienceTablets = 0;
-
-    @Column(name = "science_compasses")
-    private Integer scienceCompasses = 0;
-
-    @Column(name = "science_gears")
-    private Integer scienceGears = 0;
-
-    @Column(name = "science_wildcards")
-    private Integer scienceWildcards = 0;
+    @Column(length = 500)
+    @Convert(converter = ScienceConverter.class)
+    private Map<Science, Integer> science = new EnumMap<>(Science.class);
 
     @Column(name = "has_played_this_turn", nullable = false)
     private Boolean hasPlayedThisTurn = false;
+
+    @Column(name = "left_base_ressource_price_multiplier", nullable = false)
+    private Integer leftBaseRessourcePriceMultiplier = 2;
+
+    @Column(name = "right_base_ressource_price_multiplier", nullable = false)
+    private Integer rightBaseRessourcePriceMultiplier = 2;
+
+    @Column(name = "left_advanced_ressource_price_multiplier", nullable = false)
+    private Integer leftAdvancedRessourcePriceMultiplier = 2;
+
+    @Column(name = "right_advanced_ressource_price_multiplier", nullable = false)
+    private Integer rightAdvancedRessourcePriceMultiplier = 2;
 
     @ManyToMany
     @JoinTable(
@@ -201,36 +205,12 @@ public class PlayerStateEntity {
         this.resources = resources;
     }
 
-    public Integer getScienceTablets() {
-        return scienceTablets;
+    public Map<Science, Integer> getScience() {
+        return science;
     }
 
-    public void setScienceTablets(Integer scienceTablets) {
-        this.scienceTablets = scienceTablets;
-    }
-
-    public Integer getScienceCompasses() {
-        return scienceCompasses;
-    }
-
-    public void setScienceCompasses(Integer scienceCompasses) {
-        this.scienceCompasses = scienceCompasses;
-    }
-
-    public Integer getScienceGears() {
-        return scienceGears;
-    }
-
-    public void setScienceGears(Integer scienceGears) {
-        this.scienceGears = scienceGears;
-    }
-
-    public Integer getScienceWildcards() {
-        return scienceWildcards;
-    }
-
-    public void setScienceWildcards(Integer scienceWildcards) {
-        this.scienceWildcards = scienceWildcards;
+    public void setScience(Map<Science, Integer> science) {
+        this.science = science;
     }
 
     public Boolean getHasPlayedThisTurn() {
@@ -271,5 +251,37 @@ public class PlayerStateEntity {
 
     public void setRightNeighbor(PlayerStateEntity rightNeighbor) {
         this.rightNeighbor = rightNeighbor;
+    }
+
+    public Integer getLeftBaseRessourcePriceMultiplier() {
+        return leftBaseRessourcePriceMultiplier;
+    }
+
+    public void setLeftBaseRessourcePriceMultiplier(Integer leftBaseRessourcePriceMultiplier) {
+        this.leftBaseRessourcePriceMultiplier = leftBaseRessourcePriceMultiplier;
+    }
+
+    public Integer getRightBaseRessourcePriceMultiplier() {
+        return rightBaseRessourcePriceMultiplier;
+    }
+
+    public void setRightBaseRessourcePriceMultiplier(Integer rightBaseRessourcePriceMultiplier) {
+        this.rightBaseRessourcePriceMultiplier = rightBaseRessourcePriceMultiplier;
+    }
+
+    public Integer getLeftAdvancedRessourcePriceMultiplier() {
+        return leftAdvancedRessourcePriceMultiplier;
+    }
+
+    public void setLeftAdvancedRessourcePriceMultiplier(Integer leftAdvancedRessourcePriceMultiplier) {
+        this.leftAdvancedRessourcePriceMultiplier = leftAdvancedRessourcePriceMultiplier;
+    }
+
+    public Integer getRightAdvancedRessourcePriceMultiplier() {
+        return rightAdvancedRessourcePriceMultiplier;
+    }
+
+    public void setRightAdvancedRessourcePriceMultiplier(Integer rightAdvancedRessourcePriceMultiplier) {
+        this.rightAdvancedRessourcePriceMultiplier = rightAdvancedRessourcePriceMultiplier;
     }
 }

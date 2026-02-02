@@ -87,11 +87,12 @@ public class PlayerStateService {
                 .map(card -> card.getId())
                 .collect(Collectors.toList()));
         dto.setResources(entity.getResources());
-        dto.setScienceTablets(entity.getScienceTablets());
-        dto.setScienceCompasses(entity.getScienceCompasses());
-        dto.setScienceGears(entity.getScienceGears());
-        dto.setScienceWildcards(entity.getScienceWildcards());
+        dto.setScience(entity.getScience());
         dto.setHasPlayedThisTurn(entity.getHasPlayedThisTurn());
+        dto.setLeftBaseRessourcePriceMultiplier(entity.getLeftBaseRessourcePriceMultiplier());
+        dto.setRightBaseRessourcePriceMultiplier(entity.getRightBaseRessourcePriceMultiplier());
+        dto.setLeftAdvancedRessourcePriceMultiplier(entity.getLeftAdvancedRessourcePriceMultiplier());
+        dto.setRightAdvancedRessourcePriceMultiplier(entity.getRightAdvancedRessourcePriceMultiplier());
         dto.setHandCardIds(entity.getHand().stream()
                 .map(card -> card.getId())
                 .collect(Collectors.toList()));

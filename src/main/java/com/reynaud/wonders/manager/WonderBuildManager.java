@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Manager responsible for handling wonder building mechanics.
@@ -17,7 +16,10 @@ import java.util.stream.Collectors;
 @Component
 public class WonderBuildManager {
 
-    public WonderBuildManager() {
+    private final CardPlayManager cardPlayManager;
+
+    public WonderBuildManager(CardPlayManager cardPlayManager) {
+        this.cardPlayManager = cardPlayManager;
     }
 
     /**
@@ -32,7 +34,9 @@ public class WonderBuildManager {
     @Transactional
     public boolean buildWonderWithCard(PlayerStateEntity playerState, CardEntity cardToPlay) {
         System.out.println("[WonderBuildManager.buildWonderWithCard] Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName() + ", Current wonder stage: " + playerState.getWonderStage() + ", Wonder: " + playerState.getWonder().getName());
-        if (canBuildWonderWithCard(playerState, cardToPlay)) {
+        if (canBuildWonderWithCard(playerState)) {
+            Map<Ressources, Integer> wonderStageCost = playerState.getWonder().getStageCosts().get(playerState.getWonderStage());
+            cardPlayManager.payCost(playerState, wonderStageCost);
             playerState.getHand().remove(cardToPlay);
             playerState.setWonderStage(playerState.getWonderStage() + 1);
             playerState.getWonderCards().add(cardToPlay);
@@ -46,13 +50,12 @@ public class WonderBuildManager {
     }
 
     /**
-     * Determines if a player can build the next wonder stage with a given card.
+     * Determines if a player can build the next wonder stage.
      * 
      * @param playerState the player state entity
-     * @param cardToPlay the card to use for building
      * @return true if the wonder stage can be built, false otherwise
      */
-    public boolean canBuildWonderWithCard(PlayerStateEntity playerState, CardEntity cardToPlay) {
+    public boolean canBuildWonderWithCard(PlayerStateEntity playerState) {
         WonderEntity wonder = playerState.getWonder();
         Integer wonderStage = playerState.getWonderStage();
         System.out.println("[WonderBuildManager.canBuildWonderWithCard] Player: " + playerState.getUser().getUsername() + ", Wonder: " + wonder.getName() + ", Current stage: " + wonderStage + ", Max stages: " + wonder.getNumberOfStages());
@@ -63,78 +66,6 @@ public class WonderBuildManager {
         }
 
         Map<Ressources, Integer> wonderStageCost = wonder.getStageCosts().get(wonderStage);
-        return canAffordWonderStageCost(playerState, wonderStageCost);
-    }
-
-    /**
-     * Determines if a player can afford the resource cost of a wonder stage.
-     * Uses the same affordability logic as card play (via CardPlayManager).
-     * 
-     * @param playerState the player state entity
-     * @param wonderStageCost the cost map of resources needed
-     * @return true if the cost can be afforded, false otherwise
-     */
-    private boolean canAffordWonderStageCost(PlayerStateEntity playerState, Map<Ressources, Integer> wonderStageCost) {
-        System.out.println("[WonderBuildManager.canAffordWonderStageCost] Player: " + playerState.getUser().getUsername() + ", Stage cost: " + wonderStageCost + ", Player resources: " + playerState.getResources());
-        Map<Ressources, Integer> playerRessources = playerState.getResources();
-
-        // Step 1: Calculate missing resources after using player's own resources
-        Map<Ressources, Integer> missingResources = wonderStageCost.entrySet().stream()
-                .filter(entry -> entry.getKey().isRessource())
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> Math.max(0, entry.getValue() - playerRessources.getOrDefault(entry.getKey(), 0))
-                ));
-        
-        // Step 2: Apply mutable resources (wildcards) to cover missing resources
-        int missingBaseResources = calculateMissingResourceCount(missingResources, true)
-                - playerRessources.getOrDefault(Ressources.MUTABLE_BASE, 0);
-        int missingAdvancedResources = calculateMissingResourceCount(missingResources, false)
-                - playerRessources.getOrDefault(Ressources.MUTABLE_ADVANCED, 0);
-        
-        if (missingBaseResources <= 0 && missingAdvancedResources <= 0) {
-            return true;
-        }
-
-        // Step 3: Check if neighbors can provide the remaining missing resources
-        PlayerStateEntity leftNeighbor = playerState.getLeftNeighbor();
-        PlayerStateEntity rightNeighbor = playerState.getRightNeighbor();
-        Map<Ressources, Integer> leftResources = leftNeighbor.getResources();
-        Map<Ressources, Integer> rightResources = rightNeighbor.getResources();
-        
-        for (Map.Entry<Ressources, Integer> entry : missingResources.entrySet()) {
-            Ressources resource = entry.getKey();
-            int amountNeeded = entry.getValue();
-            
-            if (amountNeeded <= 0) {
-                continue;
-            }
-            
-            int availableFromLeft = leftResources.getOrDefault(resource, 0);
-            int availableFromRight = rightResources.getOrDefault(resource, 0);
-            int totalAvailableFromNeighbors = availableFromLeft + availableFromRight;
-            
-            if (totalAvailableFromNeighbors >= amountNeeded) {
-                if (resource.isBaseRessource()) {
-                    missingBaseResources -= amountNeeded;
-                } else if (resource.isAdvancedRessource()) {
-                    missingAdvancedResources -= amountNeeded;
-                }
-            }
-        }
-        
-        boolean result = missingBaseResources <= 0 && missingAdvancedResources <= 0;
-        System.out.println("[WonderBuildManager.canAffordWonderStageCost] Result: " + result + ", Missing base: " + missingBaseResources + ", Missing advanced: " + missingAdvancedResources);
-        return result;
-    }
-
-    /**
-     * Calculate the total count of missing resources for either base or advanced resources
-     */
-    private int calculateMissingResourceCount(Map<Ressources, Integer> missingResources, boolean isBaseResource) {
-        return missingResources.entrySet().stream()
-                .filter(entry -> isBaseResource ? entry.getKey().isBaseRessource() : entry.getKey().isAdvancedRessource())
-                .mapToInt(Map.Entry::getValue)
-                .sum();
+        return cardPlayManager.canAffordCost(playerState, wonderStageCost);
     }
 }

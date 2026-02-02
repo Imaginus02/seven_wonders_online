@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.reynaud.wonders.model.Ressources;
+import com.reynaud.wonders.model.Science;
 
 public class PlayerStateDTO {
     private Long id;
@@ -29,11 +30,12 @@ public class PlayerStateDTO {
     private Integer wonderStage = 0;
     private List<Long> playedCardIds = new ArrayList<>();
     private Map<Ressources, Integer> resources = new EnumMap<>(Ressources.class);
-    private Integer scienceTablets = 0;
-    private Integer scienceCompasses = 0;
-    private Integer scienceGears = 0;
-    private Integer scienceWildcards = 0;
+    private Map<Science, Integer> science = new EnumMap<>(Science.class);
     private Boolean hasPlayedThisTurn = false;
+    private Integer leftBaseRessourcePriceMultiplier = 2;
+    private Integer rightBaseRessourcePriceMultiplier = 2;
+    private Integer leftAdvancedRessourcePriceMultiplier = 2;
+    private Integer rightAdvancedRessourcePriceMultiplier = 2;
     private List<Long> handCardIds = new ArrayList<>();
     private List<Long> wonderCardIds = new ArrayList<>();
     private Long wonderId;
@@ -150,36 +152,12 @@ public class PlayerStateDTO {
         this.resources = resources;
     }
 
-    public Integer getScienceTablets() {
-        return scienceTablets;
+    public Map<Science, Integer> getScience() {
+        return science;
     }
 
-    public void setScienceTablets(Integer scienceTablets) {
-        this.scienceTablets = scienceTablets;
-    }
-
-    public Integer getScienceCompasses() {
-        return scienceCompasses;
-    }
-
-    public void setScienceCompasses(Integer scienceCompasses) {
-        this.scienceCompasses = scienceCompasses;
-    }
-
-    public Integer getScienceGears() {
-        return scienceGears;
-    }
-
-    public void setScienceGears(Integer scienceGears) {
-        this.scienceGears = scienceGears;
-    }
-
-    public Integer getScienceWildcards() {
-        return scienceWildcards;
-    }
-
-    public void setScienceWildcards(Integer scienceWildcards) {
-        this.scienceWildcards = scienceWildcards;
+    public void setScience(Map<Science, Integer> science) {
+        this.science = science;
     }
 
     public Boolean getHasPlayedThisTurn() {
@@ -220,5 +198,37 @@ public class PlayerStateDTO {
 
     public void setRightNeighborId(Long rightNeighborId) {
         this.rightNeighborId = rightNeighborId;
+    }
+
+    public Integer getLeftBaseRessourcePriceMultiplier() {
+        return leftBaseRessourcePriceMultiplier;
+    }
+
+    public void setLeftBaseRessourcePriceMultiplier(Integer leftBaseRessourcePriceMultiplier) {
+        this.leftBaseRessourcePriceMultiplier = leftBaseRessourcePriceMultiplier;
+    }
+
+    public Integer getRightBaseRessourcePriceMultiplier() {
+        return rightBaseRessourcePriceMultiplier;
+    }
+
+    public void setRightBaseRessourcePriceMultiplier(Integer rightBaseRessourcePriceMultiplier) {
+        this.rightBaseRessourcePriceMultiplier = rightBaseRessourcePriceMultiplier;
+    }
+
+    public Integer getLeftAdvancedRessourcePriceMultiplier() {
+        return leftAdvancedRessourcePriceMultiplier;
+    }
+
+    public void setLeftAdvancedRessourcePriceMultiplier(Integer leftAdvancedRessourcePriceMultiplier) {
+        this.leftAdvancedRessourcePriceMultiplier = leftAdvancedRessourcePriceMultiplier;
+    }
+
+    public Integer getRightAdvancedRessourcePriceMultiplier() {
+        return rightAdvancedRessourcePriceMultiplier;
+    }
+
+    public void setRightAdvancedRessourcePriceMultiplier(Integer rightAdvancedRessourcePriceMultiplier) {
+        this.rightAdvancedRessourcePriceMultiplier = rightAdvancedRessourcePriceMultiplier;
     }
 }

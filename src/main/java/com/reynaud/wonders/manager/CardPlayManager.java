@@ -1,17 +1,15 @@
 package com.reynaud.wonders.manager;
 
+import com.reynaud.wonders.dao.EffectDAO;
 import com.reynaud.wonders.entity.CardEntity;
+import com.reynaud.wonders.entity.EffectEntity;
 import com.reynaud.wonders.entity.PlayerStateEntity;
-import com.reynaud.wonders.model.CardType;
 import com.reynaud.wonders.model.Ressources;
-import com.reynaud.wonders.model.Science;
 import com.reynaud.wonders.service.LoggingService;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -24,8 +22,12 @@ public class CardPlayManager {
 
     private final LoggingService loggingService;
 
-    public CardPlayManager(LoggingService loggingService) {
+    //TODO: DAO shouldn't be accessed by manager, use service instead
+    private final EffectDAO effectDAO;
+
+    public CardPlayManager(LoggingService loggingService, EffectDAO effectDAO) {
         this.loggingService = loggingService;
+        this.effectDAO = effectDAO;
     }
 
     /**
@@ -220,295 +222,121 @@ public class CardPlayManager {
     }
 
     /**
-     * Applies the effect of a played card based on its type.
-     * Effects are intentionally left blank for now.
+     * Applies the effect of a played card using the effect system.
+     * Maps card name to effect ID and applies via EffectExecutorService.
      *
      * @param playerState the player state entity
      * @param cardToPlay the card being played
      */
     private void applyCardEffect(PlayerStateEntity playerState, CardEntity cardToPlay) {
-        switch (cardToPlay.getType()) {
-            case BROWN:
-                switch (cardToPlay.getName()) {
-                    case "Lumber Yard":
-                        playerState.getResources().merge(Ressources.WOOD, 1, Integer::sum);
-                        break;
-                    case "Clay Pool":
-                        playerState.getResources().merge(Ressources.BRICK, 1, Integer::sum);
-                        break;
-                    case "Stone Pit":
-                        playerState.getResources().merge(Ressources.STONE, 1, Integer::sum);
-                        break;
-                    case "Ore Vein":
-                        playerState.getResources().merge(Ressources.ORE, 1, Integer::sum);
-                        break;
-                    case "Timber Yard":
-                        playerState.getResources().merge(Ressources.STONE_WOOD, 1, Integer::sum);
-                        break;
-                    case "Clay Pit":
-                        playerState.getResources().merge(Ressources.ORE_BRICK, 1, Integer::sum);
-                        break;
-                    
-                    case "Sawmill":
-                        playerState.getResources().merge(Ressources.WOOD, 2, Integer::sum);
-                        break;
-                    case "Foundry":
-                        playerState.getResources().merge(Ressources.ORE, 2, Integer::sum);
-                        break;
-                    case "Quarry":
-                        playerState.getResources().merge(Ressources.STONE, 2, Integer::sum);
-                        break;
-                    case "Brickyard":
-                        playerState.getResources().merge(Ressources.BRICK, 2, Integer::sum);
-                        break;
-                    default:
-                        loggingService.warning("No effect defined for brown card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
-                        break;
-                }
-                break;
-            case GREY:
-                switch (cardToPlay.getName()) {
-                    case "Glassworks":
-                        playerState.getResources().merge(Ressources.GLASS, 1, Integer::sum);                        
-                        break;
-                    case "Press":
-                        playerState.getResources().merge(Ressources.PAPER, 1, Integer::sum);
-                        break;
-                    case "Loom":
-                        playerState.getResources().merge(Ressources.TEXTILE, 1, Integer::sum);
-                        break;                
-                    default:
-                        loggingService.warning("No effect defined for grey card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
-                        break;
-                }
-                break;
-            case BLUE:
-                switch (cardToPlay.getName()) {
-                    case "Altar":
-                        playerState.setVictoryPoints(playerState.getVictoryPoints() + 2);
-                        break;
-                    case "Theater":
-                        playerState.setVictoryPoints(playerState.getVictoryPoints() + 2);
-                        break;
-                    case "Bath":
-                        playerState.setVictoryPoints(playerState.getVictoryPoints() + 3);
-                        break;
-                    case "Courthouse":
-                        playerState.setVictoryPoints(playerState.getVictoryPoints() + 4);
-                        break;
-                    case "Temple":
-                        playerState.setVictoryPoints(playerState.getVictoryPoints() + 3);
-                        break;
-                    case "Statue":
-                        playerState.setVictoryPoints(playerState.getVictoryPoints() + 4);
-                        break;
-                    case "Aqueduct":
-                        playerState.setVictoryPoints(playerState.getVictoryPoints() + 5);
-                        break;
-                    case "Gardens":
-                        playerState.setVictoryPoints(playerState.getVictoryPoints() + 5);
-                        break;
-                    case "Senate":
-                        playerState.setVictoryPoints(playerState.getVictoryPoints() + 6);
-                        break;
-                    case "Town Hall":
-                        playerState.setVictoryPoints(playerState.getVictoryPoints() + 6);
-                        break;
-                    case "Pantheon":
-                        playerState.setVictoryPoints(playerState.getVictoryPoints() + 7);
-                        break;
-                    case "Palace":
-                        playerState.setVictoryPoints(playerState.getVictoryPoints() + 8);
-                        break;
-                    default:
-                        loggingService.warning("No effect defined for blue card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
-                        break;
-                }
-                break;
-            case YELLOW:
-                switch (cardToPlay.getName()) {
-                    case "West Trading Post":
-                        playerState.setLeftBaseRessourcePriceMultiplier(1);
-                        break;
-                    case "East Trading Post":
-                        playerState.setRightBaseRessourcePriceMultiplier(1);
-                        break;
-                    case "Marketplace":
-                        playerState.setLeftAdvancedRessourcePriceMultiplier(1);
-                        playerState.setRightAdvancedRessourcePriceMultiplier(1);
-                        break;
-                    case "Caravansery":
-                        playerState.getResources().merge(Ressources.MUTABLE_BASE, 1, Integer::sum);
-                        break;
-                    case "Forum":
-                        playerState.getResources().merge(Ressources.MUTABLE_ADVANCED, 1, Integer::sum);
-                        break;
-                    case "Vineyard":
-                        // TODO: Take into account neighbors' brown cards played this turn, even if this player is the first to play
-                        int vineyardCoins = 0;
-                        List<CardEntity> combinedPlayedCards = new ArrayList<>(playerState.getPlayedCards());
-                        combinedPlayedCards.addAll(playerState.getLeftNeighbor().getPlayedCards());
-                        combinedPlayedCards.addAll(playerState.getRightNeighbor().getPlayedCards());
-                        for (CardEntity card : combinedPlayedCards) {
-                            if (card.getType() == CardType.BROWN) {
-                                vineyardCoins += 1;
-                            }
-                        }
-                        playerState.setCoins(playerState.getCoins() + vineyardCoins);
-                        break;
-                    case "Lighthouse":
-                        // 1 coin and 1 victory point per yellow card played
-                        for (CardEntity card : playerState.getPlayedCards()) {
-                            if (card.getType() == CardType.YELLOW) {
-                                playerState.setCoins(playerState.getCoins() + 1);
-                                //playerState.setVictoryPoints(playerState.getVictoryPoints() + 1);
-                            }
-                        }
-                        // TODO: The addition of victory points should be done at the end of the game
-                        break;
-                    case "Haven":
-                        // 1 coin and 1 victory point per yellow card played
-                        for (CardEntity card : playerState.getPlayedCards()) {
-                            if (card.getType() == CardType.BROWN) {
-                                playerState.setCoins(playerState.getCoins() + 1);
-                                //playerState.setVictoryPoints(playerState.getVictoryPoints() + 1);
-                            }
-                        }
-                        // TODO: The addition of victory points should be done at the end of the game
-                        break;
-                    case "Chamber of Commerce":
-                        // 2 coins and 2 victory points per yellow card played
-                        for (CardEntity card : playerState.getPlayedCards()) {
-                            if (card.getType() == CardType.YELLOW) {
-                                playerState.setCoins(playerState.getCoins() + 2);
-                                //playerState.setVictoryPoints(playerState.getVictoryPoints() + 2);
-                            }
-                        }
-                        // TODO: The addition of victory points should be done at the end of the game
-                        break;
-                    default:
-                        loggingService.warning("No effect defined for yellow card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
-                        break;
-                }
-                break;
-            case RED:
-                switch (cardToPlay.getName()) {
-                    case "Guard Tower":
-                        playerState.setMilitaryPoints(playerState.getMilitaryPoints() + 1);
-                        break;
-                    case "Barracks":
-                        playerState.setMilitaryPoints(playerState.getMilitaryPoints() + 1);
-                        break;
-                    case "Stockade":
-                        playerState.setMilitaryPoints(playerState.getMilitaryPoints() + 1);
-                        break;
-                    case "Stables":
-                        playerState.setMilitaryPoints(playerState.getMilitaryPoints() + 2);
-                        break;
-                    case "Archery Range":
-                        playerState.setMilitaryPoints(playerState.getMilitaryPoints() + 2);
-                        break;
-                    case "Walls":
-                        playerState.setMilitaryPoints(playerState.getMilitaryPoints() + 2);
-                        break;
-                    case "Arsenal":
-                        playerState.setMilitaryPoints(playerState.getMilitaryPoints() + 3);
-                        break;
-                    case "Siege Workshop":
-                        playerState.setMilitaryPoints(playerState.getMilitaryPoints() + 3);
-                        break;
-                    case "Fortifications":
-                        playerState.setMilitaryPoints(playerState.getMilitaryPoints() + 3);
-                        break;
-                    default:
-                        loggingService.warning("No effect defined for red card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
-                        break;
-                }
-                break;
-            case GREEN:
-                switch (cardToPlay.getName()) {
-                    case "Scriptorium":
-                        playerState.getScience().merge(Science.TABLET, 1, Integer::sum);
-                        break;
-                    case "Apothecary":
-                        playerState.getScience().merge(Science.COMPASS, 1, Integer::sum);
-                        break;
-                    case "Workshop":
-                        playerState.getScience().merge(Science.GEAR, 1, Integer::sum);
-                        break;
-                    case "Dispensary":
-                        playerState.getScience().merge(Science.COMPASS, 1, Integer::sum);
-                        break;
-                    case "Laboratory":
-                        playerState.getScience().merge(Science.GEAR, 1, Integer::sum);
-                        break;
-                    case "Library":
-                        playerState.getScience().merge(Science.TABLET, 1, Integer::sum);
-                        break;
-                    case "School":
-                        playerState.getScience().merge(Science.TABLET, 1, Integer::sum);
-                        break;
-                    case "University":
-                        playerState.getScience().merge(Science.TABLET, 1, Integer::sum);
-                        break;
-                    case "Study":
-                        playerState.getScience().merge(Science.GEAR, 1, Integer::sum);
-                        break;
-                    case "Lodge":
-                        playerState.getScience().merge(Science.COMPASS, 1, Integer::sum);
-                        break;
-                    case "Academy":
-                        playerState.getScience().merge(Science.COMPASS, 1, Integer::sum);
-                        break;
-                    case "Observatory":
-                        playerState.getScience().merge(Science.GEAR, 1, Integer::sum);
-                        break;
-                    default:
-                        loggingService.warning("No effect defined for green card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
-                        break;
-                }
-                break;
-            case VIOLET:
-                switch (cardToPlay.getName()) {
-                    case "Workers Guild":
-                        // TODO: 1 victory point per brown card (neighbors only)
-                        break;
-                    case "Craftsmens Guild":
-                        // TODO: 2 victory points per grey card (neighbors only)
-                        break;
-                    case "Magistrates Guild":
-                        // TODO: 1 victory point per blue card (neighbors only)
-                        break;
-                    case "Traders Guild":
-                        // TODO: 1 victory point per yellow card (neighbors only)
-                        break;
-                    case "Spies Guild":
-                        // TODO: 1 victory point per red card (neighbors only)
-                        break;
-                    case "Philosophers Guild":
-                        // TODO: 1 victory point per green card (neighbors only)
-                        break;
-                    case "Shipowners Guild":
-                        // TODO: 1 victory point per brown + grey + violet card (self only)
-                        break;
-                    case "Scientists Guild":
-                        playerState.getScience().merge(Science.MUTABLE, 1, Integer::sum);
-                        break;
-                    case "Decorators Guild":
-                        // TODO: 7 victory point if wonder fully built
-                        break;
-                    case "Builders Guild":
-                        // TODO: 1 victory point per wonder stage (self + neighbors)
-                        break;
-                    default:
-                        loggingService.warning("No effect defined for violet card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
-                        break;
-                }
-                break;
-            default:
-                // TODO: Handle other or unknown card types
-                break;
+        String effectId = mapCardToEffectId(cardToPlay.getName());
+        
+        if (effectId == null) {
+            loggingService.warning("No effect mapping for card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
+            return;
         }
+        
+        EffectEntity effect = effectDAO.findByEffectId(effectId).orElse(null);
+        if (effect == null) {
+            loggingService.error("Effect not found: " + effectId + " for card: " + cardToPlay.getName(), "CardPlayManager.applyCardEffect");
+            return;
+        }
+
+        playerState.addPendingEffect(effect);
+        loggingService.debug("Added pending effect - Player: " + playerState.getUser().getUsername() +
+                        ", Effect: " + effectId + ", Timing: " + effect.getTiming(),
+                "CardPlayManager.applyCardEffect");
+    }
+    
+    /**
+     * Maps card name to effect ID.
+     * 
+     * @param cardName the name of the card
+     * @return the effect ID, or null if no mapping exists
+     */
+    private String mapCardToEffectId(String cardName) {
+        return switch (cardName) {
+            // BROWN CARDS
+            case "Lumber Yard" -> "LUMBER_YARD_WOOD_1";
+            case "Clay Pool" -> "CLAY_POOL_BRICK_1";
+            case "Stone Pit" -> "STONE_PIT_STONE_1";
+            case "Ore Vein" -> "ORE_VEIN_ORE_1";
+            case "Timber Yard" -> "TIMBER_YARD_STONE_WOOD_1";
+            case "Clay Pit" -> "CLAY_PIT_ORE_BRICK_1";
+            case "Sawmill" -> "SAWMILL_WOOD_2";
+            case "Foundry" -> "FOUNDRY_ORE_2";
+            case "Quarry" -> "QUARRY_STONE_2";
+            case "Brickyard" -> "BRICKYARD_BRICK_2";
+            
+            // GREY CARDS
+            case "Glassworks" -> "GLASSWORKS_GLASS_1";
+            case "Press" -> "PRESS_PAPER_1";
+            case "Loom" -> "LOOM_TEXTILE_1";
+            
+            // BLUE CARDS
+            case "Altar" -> "ALTAR_VP_2";
+            case "Theater" -> "THEATER_VP_2";
+            case "Bath" -> "BATH_VP_3";
+            case "Courthouse" -> "COURTHOUSE_VP_4";
+            case "Temple" -> "TEMPLE_VP_3";
+            case "Statue" -> "STATUE_VP_4";
+            case "Aqueduct" -> "AQUEDUCT_VP_5";
+            case "Gardens" -> "GARDENS_VP_5";
+            case "Senate" -> "SENATE_VP_6";
+            case "Town Hall" -> "TOWN_HALL_VP_6";
+            case "Pantheon" -> "PANTHEON_VP_7";
+            case "Palace" -> "PALACE_VP_8";
+            
+            // YELLOW CARDS
+            case "West Trading Post" -> "WEST_TRADING_POST";
+            case "East Trading Post" -> "EAST_TRADING_POST";
+            case "Marketplace" -> "MARKETPLACE";
+            case "Caravansery" -> "CARAVANSERY_MUTABLE_BASE_1";
+            case "Forum" -> "FORUM_MUTABLE_ADVANCED_1";
+            case "Vineyard" -> "VINEYARD_COINS_BROWN";
+            case "Lighthouse" -> "LIGHTHOUSE_COINS_YELLOW";
+            case "Haven" -> "HAVEN_COINS_BROWN";
+            case "Chamber of Commerce" -> "CHAMBER_OF_COMMERCE_COINS_YELLOW";
+            
+            // RED CARDS
+            case "Guard Tower" -> "GUARD_TOWER_MILITARY_1";
+            case "Barracks" -> "BARRACKS_MILITARY_1";
+            case "Stockade" -> "STOCKADE_MILITARY_1";
+            case "Stables" -> "STABLES_MILITARY_2";
+            case "Archery Range" -> "ARCHERY_RANGE_MILITARY_2";
+            case "Walls" -> "WALLS_MILITARY_2";
+            case "Arsenal" -> "ARSENAL_MILITARY_3";
+            case "Siege Workshop" -> "SIEGE_WORKSHOP_MILITARY_3";
+            case "Fortifications" -> "FORTIFICATIONS_MILITARY_3";
+            
+            // GREEN CARDS
+            case "Scriptorium" -> "SCRIPTORIUM_TABLET_1";
+            case "Apothecary" -> "APOTHECARY_COMPASS_1";
+            case "Workshop" -> "WORKSHOP_GEAR_1";
+            case "Dispensary" -> "DISPENSARY_COMPASS_1";
+            case "Laboratory" -> "LABORATORY_GEAR_1";
+            case "Library" -> "LIBRARY_TABLET_1";
+            case "School" -> "SCHOOL_TABLET_1";
+            case "University" -> "UNIVERSITY_TABLET_1";
+            case "Study" -> "STUDY_GEAR_1";
+            case "Lodge" -> "LODGE_COMPASS_1";
+            case "Academy" -> "ACADEMY_COMPASS_1";
+            case "Observatory" -> "OBSERVATORY_GEAR_1";
+            
+            // VIOLET CARDS
+            case "Workers Guild" -> "WORKERS_GUILD_VP_BROWN";
+            case "Craftsmens Guild" -> "CRAFTSMENS_GUILD_VP_GREY";
+            case "Magistrates Guild" -> "MAGISTRATES_GUILD_VP_BLUE";
+            case "Traders Guild" -> "TRADERS_GUILD_VP_YELLOW";
+            case "Spies Guild" -> "SPIES_GUILD_VP_RED";
+            case "Philosophers Guild" -> "PHILOSOPHERS_GUILD_VP_GREEN";
+            case "Shipowners Guild" -> "SHIPOWNERS_GUILD_VP_BROWN_GREY_VIOLET";
+            case "Scientists Guild" -> "SCIENTISTS_GUILD_MUTABLE";
+            case "Decorators Guild" -> "DECORATORS_GUILD_VP_WONDER";
+            case "Builders Guild" -> "BUILDERS_GUILD_VP_WONDER";
+            
+            default -> null;
+        };
     }
 
     /**

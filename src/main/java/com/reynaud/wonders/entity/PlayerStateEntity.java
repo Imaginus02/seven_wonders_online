@@ -105,6 +105,14 @@ public class PlayerStateEntity {
     @JoinColumn(name = "right_neighbor_id")
     private PlayerStateEntity rightNeighbor;
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "player_state_pending_effects",
+        joinColumns = @JoinColumn(name = "player_state_id"),
+        inverseJoinColumns = @JoinColumn(name = "effect_id")
+    )
+    private List<EffectEntity> pendingEffects = new ArrayList<>();
+
     // Default constructor
     public PlayerStateEntity() {
     }
@@ -284,4 +292,27 @@ public class PlayerStateEntity {
     public void setRightAdvancedRessourcePriceMultiplier(Integer rightAdvancedRessourcePriceMultiplier) {
         this.rightAdvancedRessourcePriceMultiplier = rightAdvancedRessourcePriceMultiplier;
     }
+
+    public List<EffectEntity> getPendingEffects() {
+        return pendingEffects;
+    }
+
+    public void setPendingEffects(List<EffectEntity> pendingEffects) {
+        this.pendingEffects = pendingEffects;
+    }
+
+    public void addPendingEffect(EffectEntity effect) {
+        if (!this.pendingEffects.contains(effect)) {
+            this.pendingEffects.add(effect);
+        }
+    }
+
+    public void removePendingEffect(EffectEntity effect) {
+        this.pendingEffects.remove(effect);
+    }
+
+    public boolean hasPendingEffect(String effectId) {
+        return this.pendingEffects.stream().anyMatch(e -> e.getEffectId().equals(effectId));
+    }
 }
+

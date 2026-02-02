@@ -3,10 +3,16 @@ package com.reynaud.wonders.manager;
 import com.reynaud.wonders.entity.GameEntity;
 import com.reynaud.wonders.entity.PlayerStateEntity;
 import com.reynaud.wonders.model.Age;
+import com.reynaud.wonders.model.EffectTiming;
+import com.reynaud.wonders.service.EffectExecutorService;
 import com.reynaud.wonders.service.LoggingService;
 import com.reynaud.wonders.service.PlayerStateService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 
 /**
  * Manager responsible for managing game turn logic.
@@ -18,12 +24,14 @@ public class TurnManager {
     private final PlayerStateService playerStateService;
     private final CardDistributionManager cardDistributionManager;
     private final LoggingService loggingService;
+    private final EffectExecutorService effectExecutor;
 
     public TurnManager(PlayerStateService playerStateService, CardDistributionManager cardDistributionManager,
-                       LoggingService loggingService) {
+                       LoggingService loggingService, EffectExecutorService effectExecutor) {
         this.playerStateService = playerStateService;
         this.cardDistributionManager = cardDistributionManager;
         this.loggingService = loggingService;
+        this.effectExecutor = effectExecutor;
     }
 
     /**
@@ -49,17 +57,22 @@ public class TurnManager {
                 ps.setHasPlayedThisTurn(false);
             }
             
+            applyPendingEffects(gameId, EnumSet.of(EffectTiming.IMMEDIATE, EffectTiming.END_OF_TURN));
+
             if (remainingCards == 1) {
                 // Last card of the round - discard it and move to next age
                 loggingService.info("Last card in hand - discarding and moving to next age - GameID: " + gameId + ", CurrentAge: " + game.getCurrentAge(), "TurnManager.handleEndOfTurn");
                 for (PlayerStateEntity ps : playerStateService.getPlayerStatesByGameId(gameId)) {
                     game.getDiscard().add(ps.getHand().remove(0));
                 }
+
+                applyPendingEffects(gameId, EnumSet.of(EffectTiming.END_OF_ROUND));
+
                 game.setCurrentAge(Age.getNextAge(game.getCurrentAge()));
                 loggingService.info("Age advanced - GameID: " + gameId + ", NewAge: " + game.getCurrentAge(), "TurnManager.handleEndOfTurn");
                 
                 if (game.getCurrentAge() == null) {
-                    // Game over - all ages completed
+                    applyPendingEffects(gameId, EnumSet.of(EffectTiming.END_OF_GAME));
                     loggingService.info("Game complete - All ages finished - GameID: " + gameId, "TurnManager.handleEndOfTurn");
                     // TODO: Implement end game scoring and logic
                     return;
@@ -74,6 +87,25 @@ public class TurnManager {
             }
             for (PlayerStateEntity ps : playerStateService.getPlayerStatesByGameId(gameId)) {
                 playerStateService.updatePlayerState(ps);
+            }
+        }
+    }
+
+    private void applyPendingEffects(Long gameId, EnumSet<EffectTiming> timings) {
+        List<PlayerStateEntity> players = playerStateService.getPlayerStatesByGameId(gameId);
+
+        for (PlayerStateEntity ps : players) {
+            if (ps.getPendingEffects() == null || ps.getPendingEffects().isEmpty()) {
+                continue;
+            }
+
+            List<com.reynaud.wonders.entity.EffectEntity> toApply = new ArrayList<>(ps.getPendingEffects().stream()
+                    .filter(effect -> effect.getTiming() != null && timings.contains(effect.getTiming()))
+                    .toList());
+
+            for (com.reynaud.wonders.entity.EffectEntity effect : toApply) {
+                effectExecutor.applyEffect(ps, effect);
+                ps.removePendingEffect(effect);
             }
         }
     }

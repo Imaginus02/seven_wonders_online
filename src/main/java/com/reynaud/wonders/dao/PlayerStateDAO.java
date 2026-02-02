@@ -22,4 +22,7 @@ public interface PlayerStateDAO extends JpaRepository<PlayerStateEntity, Long> {
 
     @Query("SELECT ps FROM PlayerStateEntity ps WHERE ps.game.id = :gameId AND ps.position = :position")
     PlayerStateEntity findByGameIdAndPosition(@Param("gameId") Long gameId, @Param("position") Integer position);
+
+    @Query("SELECT COUNT(ps) > 0 FROM PlayerStateEntity ps WHERE ps.game.id = :gameId AND ps.hasPlayedThisTurn = false")
+    boolean hasPlayersNotYetPlayed(@Param("gameId") Long gameId);
 }

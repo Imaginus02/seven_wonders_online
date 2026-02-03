@@ -4,6 +4,7 @@ import com.reynaud.wonders.entity.GameEntity;
 import com.reynaud.wonders.entity.PlayerStateEntity;
 import com.reynaud.wonders.model.Age;
 import com.reynaud.wonders.model.EffectTiming;
+import com.reynaud.wonders.model.GameStatus;
 import com.reynaud.wonders.service.EffectExecutorService;
 import com.reynaud.wonders.service.LoggingService;
 import com.reynaud.wonders.service.PlayerStateService;
@@ -25,13 +26,16 @@ public class TurnManager {
     private final CardDistributionManager cardDistributionManager;
     private final LoggingService loggingService;
     private final EffectExecutorService effectExecutor;
+    private final GameStateManager gameStateManager;
 
     public TurnManager(PlayerStateService playerStateService, CardDistributionManager cardDistributionManager,
-                       LoggingService loggingService, EffectExecutorService effectExecutor) {
+                       LoggingService loggingService, EffectExecutorService effectExecutor,
+                       GameStateManager gameStateManager) {
         this.playerStateService = playerStateService;
         this.cardDistributionManager = cardDistributionManager;
         this.loggingService = loggingService;
         this.effectExecutor = effectExecutor;
+        this.gameStateManager = gameStateManager;
     }
 
     /**
@@ -59,14 +63,48 @@ public class TurnManager {
             
             applyPendingEffects(gameId, EnumSet.of(EffectTiming.IMMEDIATE, EffectTiming.END_OF_TURN));
 
-            if (remainingCards == 1) {
+            // Check if any player has a pending BUILD_FROM_DISCARD effect
+            // If so, pause the game to wait for API call to select a card from discard
+            if (hasPendingBuildFromDiscard(game, gameId)) {
+                gameStateManager.setGameToWaiting(game);
+                loggingService.info("Game paused for BUILD_FROM_DISCARD effect - GameID: " + gameId, "TurnManager.handleEndOfTurn");
+            }
+
+            if (game.getStatus() == GameStatus.WAITING) {
+                loggingService.info("Game is in WAITING status - skipping end of turn processing - GameID: " + gameId, "TurnManager.handleEndOfTurn");
+                return;
+            }
+
+            if (remainingCards <= 1) {
+
+                // Check if any player can play the last card with BABYLON_B_STAGE_2_PLAY_LAST_CARDS effect
+                List<PlayerStateEntity> players = playerStateService.getPlayerStatesByGameId(gameId);
+                boolean hasPlayersWithCards = players.stream().anyMatch(ps -> !ps.getHand().isEmpty());
+                boolean hasBabylonEffect = players.stream()
+                        .anyMatch(ps -> ps.getPendingEffects() != null && ps.getPendingEffects().stream()
+                                .anyMatch(effect -> "BABYLON_B_STAGE_2_PLAY_LAST_CARDS".equals(effect.getEffectId())));
+                
+                if (hasPlayersWithCards && hasBabylonEffect) {
+                    players.stream()
+                            .filter(ps -> ps.getPendingEffects() != null && ps.getPendingEffects().stream()
+                                    .anyMatch(effect -> "BABYLON_B_STAGE_2_PLAY_LAST_CARDS".equals(effect.getEffectId())))
+                            .findFirst()
+                            .ifPresent(ps -> ps.setHasPlayedThisTurn(false));
+                    return;
+                }
+
                 // Last card of the round - discard it and move to next age
                 loggingService.info("Last card in hand - discarding and moving to next age - GameID: " + gameId + ", CurrentAge: " + game.getCurrentAge(), "TurnManager.handleEndOfTurn");
+                
+                applyPendingEffects(gameId, EnumSet.of(EffectTiming.END_OF_AGE_BEFORE_DISCARD));
+
                 for (PlayerStateEntity ps : playerStateService.getPlayerStatesByGameId(gameId)) {
                     game.getDiscard().add(ps.getHand().remove(0));
                 }
 
-                applyPendingEffects(gameId, EnumSet.of(EffectTiming.END_OF_ROUND));
+                applyPendingEffects(gameId, EnumSet.of(EffectTiming.END_OF_AGE_AFTER_DISCARD));
+
+                
 
                 game.setCurrentAge(Age.getNextAge(game.getCurrentAge()));
                 loggingService.info("Age advanced - GameID: " + gameId + ", NewAge: " + game.getCurrentAge(), "TurnManager.handleEndOfTurn");
@@ -88,7 +126,30 @@ public class TurnManager {
             for (PlayerStateEntity ps : playerStateService.getPlayerStatesByGameId(gameId)) {
                 playerStateService.updatePlayerState(ps);
             }
+
+
         }
+    }
+
+    /**
+     * Check if any player has a pending BUILD_FROM_DISCARD effect that needs resolution.
+     * 
+     * @param game the game entity
+     * @param gameId the game ID
+     * @return true if BUILD_FROM_DISCARD is pending for any player, false otherwise
+     */
+    private boolean hasPendingBuildFromDiscard(GameEntity game, Long gameId) {
+        List<PlayerStateEntity> players = playerStateService.getPlayerStatesByGameId(gameId);
+        for (PlayerStateEntity ps : players) {
+            if (ps.getPendingEffects() != null) {
+                boolean hasBuildFromDiscard = ps.getPendingEffects().stream()
+                        .anyMatch(e -> "BUILD_FROM_DISCARD".equals(e.getEffectId()));
+                if (hasBuildFromDiscard) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void applyPendingEffects(Long gameId, EnumSet<EffectTiming> timings) {
@@ -105,7 +166,10 @@ public class TurnManager {
 
             for (com.reynaud.wonders.entity.EffectEntity effect : toApply) {
                 effectExecutor.applyEffect(ps, effect);
-                ps.removePendingEffect(effect);
+                //TODO: Remove this ugly condition an handle it in a more generic way
+                if (effect.getEffectId() != "BABYLON_B_STAGE_2_PLAY_LAST_CARDS") {
+                    ps.removePendingEffect(effect);
+                }
             }
         }
     }

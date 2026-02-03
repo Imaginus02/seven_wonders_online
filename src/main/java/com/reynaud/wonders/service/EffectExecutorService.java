@@ -273,6 +273,10 @@ public class EffectExecutorService {
                 }
                 return true;
             }
+            case "BUILD_FROM_DISCARD":
+                // Mark that this player needs to select a card from discard
+                // The game will be paused after all end-of-turn effects are applied
+                return true;
             default:
                 return false;
         }

@@ -135,3 +135,40 @@ async function sendCardAction(action, cardName) {
     return { success: false };
   }
 }
+
+// Fetch available actions from API
+async function fetchAvailableActionsFromAPI() {
+  try {
+    const response = await fetch(`/api/available-actions?gameId=${gameId}`);
+    const data = await response.json();
+    console.log('[API] Available actions:', data.availableActions);
+    return data.availableActions;
+  } catch (error) {
+    console.error('Error fetching available actions:', error);
+    return [];
+  }
+}
+
+// Send select discard card to API
+async function sendSelectDiscardCard(cardId, action) {
+  try {
+    const { token, paramName } = getCsrfTokenAndParam();
+    
+    // Build URL with CSRF token as query parameter
+    let url = `/api/select-discard-card?gameId=${gameId}&cardId=${cardId}&action=${action}`;
+    if (token) {
+      url += `&${paramName}=${encodeURIComponent(token)}`;
+      console.log(`[CSRF] Using query parameter '${paramName}' with token`);
+    }
+    
+    const response = await fetch(url, {
+      method: 'POST'
+    });
+    const data = await response.json();
+    console.log(`[API] Select discard card response (cardId: ${cardId}, action: ${action}):`, data);
+    return data;
+  } catch (error) {
+    console.error('Error selecting discard card:', error);
+    return { error: 'Failed to select card' };
+  }
+}

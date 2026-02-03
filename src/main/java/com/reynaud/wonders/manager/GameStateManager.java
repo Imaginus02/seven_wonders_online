@@ -83,4 +83,12 @@ public class GameStateManager {
         loggingService.info("Game cancelled successfully - GameID: " + game.getId() + ", CancelledAt: " + game.getFinishedAt(), "GameStateManager.cancelGame");
         return gameDAO.save(game);
     }
+
+    @Transactional
+    public GameEntity setGameToWaiting(GameEntity game) {
+        loggingService.info("Setting game to WAITING state - GameID: " + game.getId() + ", CurrentStatus: " + game.getStatus(), "GameStateManager.setGameToWaiting");
+        game.setStatus(GameStatus.WAITING);
+        loggingService.info("Game set to WAITING state successfully - GameID: " + game.getId(), "GameStateManager.setGameToWaiting");
+        return gameDAO.save(game);
+    }
 }

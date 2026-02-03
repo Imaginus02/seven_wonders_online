@@ -32,21 +32,38 @@ public class CardPlayManager {
 
     /**
      * Processes a card play action, moving the specified card from the player's hand to their played cards.
+     * Default cost checking enabled.
      * 
      * @param playerState the player state entity performing the action
      * @param cardToPlay the card entity to be played
      * @return true if the card was successfully played, false if the player cannot afford the card cost
      */
-    @Transactional
     public boolean playCard(PlayerStateEntity playerState, CardEntity cardToPlay) {
-        loggingService.debug("Playing card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName() + ", HandSize: " + playerState.getHand().size(), "CardPlayManager.playCard");
-        if (canPlayCard(playerState, cardToPlay)) {
-            if (cardToPlay.getCoinCost() > 0) {
-                int currentCoins = playerState.getCoins();
-                playerState.setCoins(currentCoins - cardToPlay.getCoinCost());
-                loggingService.debug("Paid coin cost - Player: " + playerState.getUser().getUsername() + ", CoinCost: " + cardToPlay.getCoinCost() + ", RemainingCoins: " + playerState.getCoins(), "CardPlayManager.playCard");
+        return playCard(playerState, cardToPlay, false);
+    }
+
+    /**
+     * Processes a card play action, moving the specified card from the player's hand to their played cards.
+     * 
+     * @param playerState the player state entity performing the action
+     * @param cardToPlay the card entity to be played
+     * @param ignoreCost if true, the card cost is ignored (used for BUILD_FROM_DISCARD effect)
+     * @return true if the card was successfully played, false if the player cannot afford the card cost
+     */
+    @Transactional
+    public boolean playCard(PlayerStateEntity playerState, CardEntity cardToPlay, boolean ignoreCost) {
+        loggingService.debug("Playing card - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName() + ", HandSize: " + playerState.getHand().size() + ", IgnoreCost: " + ignoreCost, "CardPlayManager.playCard");
+        if (ignoreCost || canPlayCard(playerState, cardToPlay)) {
+            if (!ignoreCost) {
+                if (cardToPlay.getCoinCost() > 0) {
+                    int currentCoins = playerState.getCoins();
+                    playerState.setCoins(currentCoins - cardToPlay.getCoinCost());
+                    loggingService.debug("Paid coin cost - Player: " + playerState.getUser().getUsername() + ", CoinCost: " + cardToPlay.getCoinCost() + ", RemainingCoins: " + playerState.getCoins(), "CardPlayManager.playCard");
+                } else {
+                    payCost(playerState, cardToPlay.getCost());
+                }
             } else {
-                payCost(playerState, cardToPlay.getCost());
+                loggingService.debug("Ignoring card cost - Player: " + playerState.getUser().getUsername() + ", Card: " + cardToPlay.getName(), "CardPlayManager.playCard");
             }
             playerState.getHand().remove(cardToPlay);
             playerState.getPlayedCards().add(cardToPlay);

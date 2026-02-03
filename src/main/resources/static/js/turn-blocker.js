@@ -2,28 +2,28 @@
 
 let turnBlockerInterval = null;
 let isBlockingTurn = false;
+let currentAvailableActions = [];
 
 /**
- * Check if the player has played this turn and show/hide blocking overlay
+ * Check available actions and update UI accordingly
  */
-async function checkHasPlayedThisTurn() {
+async function checkAvailableActions() {
   try {
-    const response = await fetch(`/api/has-played-this-turn?gameId=${gameId}`);
+    const actions = await fetchAvailableActionsFromAPI();
+    currentAvailableActions = actions;
     
-    if (!response.ok) {
-      console.error('[TurnBlocker] Failed to fetch hasPlayedThisTurn:', response.status);
-      return;
-    }
+    console.log('[TurnBlocker] Available actions:', actions);
     
-    const data = await response.json();
-    const hasPlayed = data.hasPlayedThisTurn;
+    // If player can do standard actions (play, build, discard), they haven't played yet
+    const canPlayStandardActions = actions.includes('play');
+    const canBuildFromDiscard = actions.includes('build_from_discard');
     
-    console.log('[TurnBlocker] Has played this turn:', hasPlayed);
-    
-    if (hasPlayed && !isBlockingTurn) {
+    if (!canPlayStandardActions && !canBuildFromDiscard && !isBlockingTurn) {
+      // No actions available - player has played and waiting
       showTurnBlockerOverlay();
       isBlockingTurn = true;
-    } else if (!hasPlayed && isBlockingTurn) {
+    } else if (canPlayStandardActions && isBlockingTurn) {
+      // Turn changed - player can play again
       hideTurnBlockerOverlay();
       isBlockingTurn = false;
       // Turn has changed - reload all game data
@@ -31,9 +31,18 @@ async function checkHasPlayedThisTurn() {
       if (typeof reloadAllGameData === 'function') {
         await reloadAllGameData();
       }
+    } else if (canBuildFromDiscard && isBlockingTurn) {
+      // Special action available - hide blocker
+      hideTurnBlockerOverlay();
+      isBlockingTurn = false;
+    }
+    
+    // Enable/disable discard cards based on build_from_discard action
+    if (typeof enableDiscardCardSelection === 'function') {
+      enableDiscardCardSelection(canBuildFromDiscard);
     }
   } catch (error) {
-    console.error('[TurnBlocker] Error checking hasPlayedThisTurn:', error);
+    console.error('[TurnBlocker] Error checking available actions:', error);
   }
 }
 
@@ -80,11 +89,11 @@ function startTurnPolling() {
   console.log('[TurnBlocker] Starting turn polling...');
   
   // Check immediately
-  checkHasPlayedThisTurn();
+  checkAvailableActions();
   
   // Then poll every 2 seconds
   turnBlockerInterval = setInterval(() => {
-    checkHasPlayedThisTurn();
+    checkAvailableActions();
   }, 2000);
 }
 

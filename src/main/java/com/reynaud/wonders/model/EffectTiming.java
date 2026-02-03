@@ -16,12 +16,18 @@ public enum EffectTiming {
      * (e.g., effects that need to check game state across all players)
      */
     END_OF_TURN,
+
+    /**
+     * Effect triggered at the end of a round before the cards are discarded
+     * (e.g., effects that activate just before hand discarding)
+     */
+    END_OF_AGE_BEFORE_DISCARD,
     
     /**
-     * Effect triggered at the end of a round when cards are discarded and hands rotated
-     * (e.g., effects that activate after hand rotation)
+     * Effect triggered at the end of a round afer the cards are discarded and before hands rotation
+     * (e.g., effects that activate just before hand rotation)
      */
-    END_OF_ROUND,
+    END_OF_AGE_AFTER_DISCARD,
     
     /**
      * Effect triggered at the end of the game during final scoring

@@ -51,7 +51,7 @@ function renderPlayed(cards) {
 }
 
 // Render discarded cards
-function renderDiscarded(cards) {
+function renderDiscarded(cards, canSelect = false) {
   const gridEl = document.getElementById("discardGrid");
   const emptyEl = document.getElementById("discardEmpty");
   gridEl.innerHTML = "";
@@ -61,10 +61,29 @@ function renderDiscarded(cards) {
   }
   emptyEl.hidden = true;
   cards.forEach((card) => {
-    const img = document.createElement("img");
-    img.src = toSrc(card);
-    img.alt = card;
-    gridEl.appendChild(img);
+    // Handle both old format (string) and new format (object with id/image)
+    const cardImage = typeof card === 'string' ? card : card.image;
+    const cardId = typeof card === 'object' ? card.id : null;
+    
+    if (canSelect && cardId) {
+      // Create clickable button for discard cards when build_from_discard is available
+      const btn = document.createElement("button");
+      btn.className = "discard-card-button";
+      btn.title = `Select ${cardImage}`;
+      btn.addEventListener("click", () => selectDiscardCard(cardId, cardImage));
+      
+      const img = document.createElement("img");
+      img.src = toSrc(cardImage);
+      img.alt = cardImage;
+      btn.appendChild(img);
+      gridEl.appendChild(btn);
+    } else {
+      // Regular non-clickable card
+      const img = document.createElement("img");
+      img.src = toSrc(cardImage);
+      img.alt = cardImage;
+      gridEl.appendChild(img);
+    }
   });
 }
 

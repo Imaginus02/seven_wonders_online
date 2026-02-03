@@ -8,6 +8,7 @@ import com.reynaud.wonders.entity.WonderEntity;
 import com.reynaud.wonders.manager.CardPlayManager;
 import com.reynaud.wonders.manager.TurnManager;
 import com.reynaud.wonders.manager.WonderBuildManager;
+import com.reynaud.wonders.model.GameStatus;
 import com.reynaud.wonders.service.GameService;
 import com.reynaud.wonders.service.LoggingService;
 import com.reynaud.wonders.service.PlayerStateService;
@@ -206,10 +207,10 @@ public class GameStateApiController {
 
     /**
      * GET /api/discarded
-     * Returns the cards that have been discarded
+     * Returns the cards that have been discarded with their IDs
      */
     @GetMapping("/discarded")
-    public ResponseEntity<Map<String, List<String>>> getDiscardedCards(
+    public ResponseEntity<Map<String, List<Map<String, Object>>>> getDiscardedCards(
             @RequestParam Long gameId,
             Authentication authentication) {
         if (authentication == null) {
@@ -221,11 +222,16 @@ public class GameStateApiController {
             return ResponseEntity.notFound().build();
         }
 
-        List<String> discardedCards = game.getDiscard().stream()
-                .map(CardEntity::getImage)
+        List<Map<String, Object>> discardedCards = game.getDiscard().stream()
+                .map(card -> {
+                    Map<String, Object> cardData = new HashMap<>();
+                    cardData.put("id", card.getId());
+                    cardData.put("image", card.getImage());
+                    return cardData;
+                })
                 .collect(Collectors.toList());
         
-        Map<String, List<String>> response = new HashMap<>();
+        Map<String, List<Map<String, Object>>> response = new HashMap<>();
         response.put("discarded", discardedCards);
         return ResponseEntity.ok(response);
     }
@@ -453,6 +459,134 @@ public class GameStateApiController {
 
         Map<String, Boolean> response = new HashMap<>();
         response.put("hasPlayedThisTurn", playerState.getHasPlayedThisTurn());
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/available-actions")
+    public ResponseEntity<Map<String, List<String>>> getAvailableActions(
+            @RequestParam Long gameId,
+            Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        UserEntity user = userService.findByUsername(authentication.getName());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        PlayerStateEntity playerState = playerStateService.getPlayerStateByGameIdAndUserId(gameId, user.getId());
+        if (playerState == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (!playerState.getHasPlayedThisTurn()) {
+            Map<String, List<String>> response = new HashMap<>();
+            response.put("availableActions", List.of("play", "build", "discard"));
+            return ResponseEntity.ok(response);
+        }
+
+        List<String> actions = new ArrayList<>();
+        if (playerState.getPendingEffects().stream()
+                .anyMatch(e -> "BUILD_FROM_DISCARD".equals(e.getEffectId()))) {
+            actions.add("build_from_discard");
+        }
+
+        Map<String, List<String>> response = new HashMap<>();
+        response.put("availableActions", actions);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * POST /api/select-discard-card
+     * Handles the BUILD_FROM_DISCARD effect by allowing a player to select a card from the discard pile,
+     * remove it, and either play it without cost or use it to build their wonder.
+     */
+    @PostMapping("/select-discard-card")
+    public ResponseEntity<Map<String, String>> selectDiscardCard(
+            @RequestParam Long gameId,
+            @RequestParam Long cardId,
+            @RequestParam String action,
+            Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // Validate action parameter
+        if (!List.of("play", "build").contains(action)) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "Invalid action. Must be 'play' or 'build'");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        GameEntity game = gameService.getGameById(gameId);
+        if (game == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        UserEntity user = userService.findByUsername(authentication.getName());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        PlayerStateEntity playerState = playerStateService.getPlayerStateByGameIdAndUserId(gameId, user.getId());
+        if (playerState == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Find the card in the discard pile
+        CardEntity cardToUse = game.getDiscard().stream()
+                .filter(card -> card.getId().equals(cardId))
+                .findFirst()
+                .orElse(null);
+
+        if (cardToUse == null) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "Card not found in discard pile");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        // Remove card from discard pile
+        game.getDiscard().remove(cardToUse);
+        loggingService.info("Card removed from discard - GameID: " + gameId + ", CardId: " + cardId + ", Card: " + cardToUse.getName() + ", Action: " + action, "GameStateApiController.selectDiscardCard");
+
+        boolean success = false;
+        String actionDescription = "";
+
+        // Perform the requested action
+        if ("play".equals(action)) {
+            // Play the card without cost (ignoreCost = true)
+            success = cardPlayManager.playCard(playerState, cardToUse, true);
+            actionDescription = "played";
+        } else if ("build".equals(action)) {
+            // Build wonder with the card
+            success = wonderBuildManager.buildWonderWithCard(playerState, cardToUse);
+            actionDescription = "used to build wonder";
+        }
+
+        if (!success) {
+            // If action failed, put the card back in the discard
+            game.getDiscard().add(cardToUse);
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "Failed to " + action + " the selected card");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        // Remove the BUILD_FROM_DISCARD effect from pending effects
+        playerState.getPendingEffects().removeIf(e -> "BUILD_FROM_DISCARD".equals(e.getEffectId()));
+
+        // Update game and player state
+        playerStateService.updatePlayerState(playerState);
+        game.setStatus(GameStatus.PLAYING);
+        gameService.updateGame(game);
+        
+        turnManager.handleEndOfTurn(game, gameId, playerState);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("success", "Card " + actionDescription + " successfully from discard");
+        response.put("card", cardToUse.getName());
+        response.put("action", action);
+        loggingService.info("BUILD_FROM_DISCARD effect completed - GameID: " + gameId + ", Player: " + user.getUsername() + ", Card: " + cardToUse.getName() + ", Action: " + action, "GameStateApiController.selectDiscardCard");
         return ResponseEntity.ok(response);
     }
 }

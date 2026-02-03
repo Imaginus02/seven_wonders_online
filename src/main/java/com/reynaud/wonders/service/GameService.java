@@ -79,7 +79,7 @@ public class GameService {
 
     @Transactional(readOnly = true)
     public Long countActiveGames() {
-        return gameDAO.countActiveGames(List.of(GameStatus.AGE_I, GameStatus.AGE_II, GameStatus.AGE_III));
+        return gameDAO.countActiveGames(List.of(GameStatus.PLAYING));
     }
 
     @Transactional

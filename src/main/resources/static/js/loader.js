@@ -42,9 +42,20 @@ async function loadPlayedCards() {
 }
 
 // Load discarded cards and render them
+let currentDiscardedCards = [];
+let canSelectDiscard = false;
+
 async function loadDiscardedCards() {
-  const discardedCards = await fetchDiscardedCardsFromAPI();
-  renderDiscarded(discardedCards);
+  currentDiscardedCards = await fetchDiscardedCardsFromAPI();
+  renderDiscarded(currentDiscardedCards, canSelectDiscard);
+}
+
+// Enable or disable discard card selection
+function enableDiscardCardSelection(enabled) {
+  console.log('[Loader] Discard card selection enabled:', enabled);
+  canSelectDiscard = enabled;
+  // Re-render discarded cards with updated selection state
+  renderDiscarded(currentDiscardedCards, canSelectDiscard);
 }
 
 // Reload all game data from API

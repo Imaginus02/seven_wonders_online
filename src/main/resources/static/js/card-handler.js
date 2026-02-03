@@ -123,3 +123,115 @@ async function discardCard() {
     showErrorMessage(errorMsg);
   }
 }
+
+// Variables for discard card selection
+let selectedDiscardCardId = null;
+let selectedDiscardCardImage = null;
+
+// Select a card from the discard pile
+function selectDiscardCard(cardId, cardImage) {
+  selectedDiscardCardId = cardId;
+  selectedDiscardCardImage = cardImage;
+  selectedImgEl.src = toSrc(cardImage);
+  overlayEl.classList.add("active");
+  
+  // Show both play and build buttons for discard cards
+  const playBtn = document.getElementById("playButton");
+  const buildBtn = document.getElementById("buildButton");
+  const discardBtn = document.getElementById("discardButton");
+  
+  // Update button text to indicate this is from discard
+  playBtn.textContent = "Play from Discard";
+  buildBtn.textContent = "Build from Discard";
+  playBtn.style.display = "block";
+  buildBtn.style.display = "block";
+  discardBtn.style.display = "none";
+}
+
+// Play selected card from discard pile
+async function playCardFromDiscard() {
+  if (selectedDiscardCardId === null) return;
+  
+  const result = await sendSelectDiscardCard(selectedDiscardCardId, 'play');
+  
+  if (result.success || !result.error) {
+    clearDiscardSelection();
+    // Reload game data to reflect changes
+    if (typeof reloadAllGameData === 'function') {
+      await reloadAllGameData();
+    }
+  } else {
+    clearDiscardSelection();
+    const errorMsg = result.error || "Failed to play card from discard";
+    showErrorMessage(errorMsg);
+  }
+}
+
+// Build wonder with selected card from discard pile
+async function buildWonderFromDiscard() {
+  if (selectedDiscardCardId === null) return;
+  
+  const result = await sendSelectDiscardCard(selectedDiscardCardId, 'build');
+  
+  if (result.success || !result.error) {
+    clearDiscardSelection();
+    // Reload game data to reflect changes
+    if (typeof reloadAllGameData === 'function') {
+      await reloadAllGameData();
+    }
+  } else {
+    clearDiscardSelection();
+    const errorMsg = result.error || "Failed to build wonder from discard";
+    showErrorMessage(errorMsg);
+  }
+}
+
+// Clear discard card selection
+function clearDiscardSelection() {
+  selectedDiscardCardId = null;
+  selectedDiscardCardImage = null;
+  originalClearSelection();
+  
+  // Reset button text and visibility
+  const playBtn = document.getElementById("playButton");
+  const buildBtn = document.getElementById("buildButton");
+  const discardBtn = document.getElementById("discardButton");
+  
+  playBtn.textContent = "Play";
+  buildBtn.textContent = "Build";
+  playBtn.style.display = "block";
+  buildBtn.style.display = "block";
+  discardBtn.style.display = "block";
+}
+
+// Store original functions
+const originalPlayCard = playCard;
+const originalBuildWonder = buildWonder;
+const originalClearSelection = clearSelection;
+
+// Override playCard to handle both hand and discard cards
+async function playCard() {
+  if (selectedDiscardCardId !== null) {
+    await playCardFromDiscard();
+  } else {
+    await originalPlayCard();
+  }
+}
+
+// Override buildWonder to handle both hand and discard cards
+async function buildWonder() {
+  if (selectedDiscardCardId !== null) {
+    await buildWonderFromDiscard();
+  } else {
+    await originalBuildWonder();
+  }
+}
+
+// Override clearSelection to handle discard cards too
+function clearSelection() {
+  if (selectedDiscardCardId !== null) {
+    clearDiscardSelection();
+  } else {
+    originalClearSelection();
+  }
+}

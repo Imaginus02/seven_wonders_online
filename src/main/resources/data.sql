@@ -212,7 +212,7 @@ INSERT INTO effects (effect_id, description, timing, parameters) VALUES
 
 -- WONDER EFFECTS - Babylon B
 ('BABYLON_B_STAGE_1_VP_3', 'Babylon B Stage 1: +3 VP', 'IMMEDIATE', 'VP:3'),
-('BABYLON_B_STAGE_2_PLAY_LAST_CARDS', 'Babylon B Stage 2: Play last 2 cards of age', 'DEFERRED', 'BABYLON_B_PLAY_LAST'),
+('BABYLON_B_STAGE_2_PLAY_LAST_CARDS', 'Babylon B Stage 2: Play last 2 cards of age', 'END_OF_AGE_BEFORE_DISCARD', 'BABYLON_B_PLAY_LAST'),
 ('BABYLON_B_STAGE_3_MUTABLE_SCIENCE_1', 'Babylon B Stage 3: +1 Mutable Science', 'IMMEDIATE', '12:1'),
 
 -- WONDER EFFECTS - Ephesos A
@@ -238,13 +238,13 @@ INSERT INTO effects (effect_id, description, timing, parameters) VALUES
 
 -- WONDER EFFECTS - Halikarnassos A
 ('HALIKARNASSOS_A_STAGE_1_VP_3', 'Halikarnassos A Stage 1: +3 VP', 'IMMEDIATE', 'VP:3'),
-('HALIKARNASSOS_A_STAGE_2_BUILD_DISCARD', 'Halikarnassos A Stage 2: Build card from discard', 'DEFERRED', 'BUILD_FROM_DISCARD'),
+('HALIKARNASSOS_A_STAGE_2_BUILD_DISCARD', 'Halikarnassos A Stage 2: Build card from discard', 'END_OF_TURN', 'BUILD_FROM_DISCARD'),
 ('HALIKARNASSOS_A_STAGE_3_VP_7', 'Halikarnassos A Stage 3: +7 VP', 'IMMEDIATE', 'VP:7'),
 
 -- WONDER EFFECTS - Halikarnassos B
-('HALIKARNASSOS_B_STAGE_1_BUILD_DISCARD', 'Halikarnassos B Stage 1: Build card from discard + 2 VP', 'DEFERRED', 'BUILD_FROM_DISCARD|VP:2'),
-('HALIKARNASSOS_B_STAGE_2_BUILD_DISCARD', 'Halikarnassos B Stage 2: Build card from discard + 1 VP', 'DEFERRED', 'BUILD_FROM_DISCARD|VP:1'),
-('HALIKARNASSOS_B_STAGE_3_BUILD_DISCARD', 'Halikarnassos B Stage 3: Build card from discard', 'DEFERRED', 'BUILD_FROM_DISCARD'),
+('HALIKARNASSOS_B_STAGE_1_BUILD_DISCARD', 'Halikarnassos B Stage 1: Build card from discard + 2 VP', 'END_OF_TURN', 'BUILD_FROM_DISCARD|VP:2'),
+('HALIKARNASSOS_B_STAGE_2_BUILD_DISCARD', 'Halikarnassos B Stage 2: Build card from discard + 1 VP', 'END_OF_TURN', 'BUILD_FROM_DISCARD|VP:1'),
+('HALIKARNASSOS_B_STAGE_3_BUILD_DISCARD', 'Halikarnassos B Stage 3: Build card from discard', 'END_OF_TURN', 'BUILD_FROM_DISCARD'),
 
 -- WONDER EFFECTS - Olympia A
 ('OLYMPIA_A_STAGE_1_VP_3', 'Olympia A Stage 1: +3 VP', 'IMMEDIATE', 'VP:3'),

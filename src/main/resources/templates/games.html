@@ -57,7 +57,7 @@
 </head>
 <body>
 <div class="container">
-    <div class="nav"><a href=\"/home\">&larr; Back to Home</a></div>
+    <div class="nav"><a href="/home">&larr; Back to Home</a></div>
     <h1>Games</h1>
     <p class="welcome" th:if="${username}">Signed in as <strong th:text="${username}">user</strong></p>
     <a href="/games/create" class="btn btn-primary">+ Create New Game</a>
@@ -73,7 +73,8 @@
                     · Turn <span th:text="${game.currentTurn}">0</span>
                 </div>
             </div>
-            <a th:href="@{'/games/' + ${game.id}}" class="btn">Open</a>
+            <a th:href="@{'/games/' + ${game.id}}" class="btn">View status</a>
+            <a th:href="@{'/play?gameId=' + ${game.id}}" class="btn">Play</a>
         </div>
     </div>
 
@@ -89,7 +90,7 @@
                     · Turn <span th:text="${game.currentTurn}">0</span>
                 </div>
             </div>
-            <a th:href="@{'/games/' + ${game.id}}" class="btn">Open</a>
+            <a th:href="@{'/games/' + ${game.id}}" class="btn">View status</a>
         </div>
     </div>
 </div>

@@ -67,41 +67,41 @@ function selectCard(index) {
   overlayEl.classList.add("active");
 }
 
-// Clear current card selection
-function clearSelection() {
+// Clear current hand card selection
+function clearHandSelection() {
   selectedIndex = null;
   overlayEl.classList.remove("active");
 }
 
 // Play selected card
-async function playCard() {
+async function playHandCard() {
   if (selectedIndex === null) return;
   const cardName = cards[selectedIndex];
   const result = await sendCardAction('play', cardName);
   
   if (result.success) {
     cards.splice(selectedIndex, 1);
-    clearSelection();
+    clearHandSelection();
     renderHand();
   } else {
-    clearSelection();
+    clearHandSelection();
     const errorMsg = result.message || "This card can't be played";
     showErrorMessage(errorMsg);
   }
 }
 
 // Build wonder with selected card
-async function buildWonder() {
+async function buildWonderWithHandCard() {
   if (selectedIndex === null) return;
   const cardName = cards[selectedIndex];
   const result = await sendCardAction('build', cardName);
   
   if (result.success) {
     cards.splice(selectedIndex, 1);
-    clearSelection();
+    clearHandSelection();
     renderHand();
   } else {
-    clearSelection();
+    clearHandSelection();
     const errorMsg = result.message || "Can't build wonder with this card";
     showErrorMessage(errorMsg);
   }
@@ -115,10 +115,10 @@ async function discardCard() {
   
   if (result.success) {
     cards.splice(selectedIndex, 1);
-    clearSelection();
+    clearHandSelection();
     renderHand();
   } else {
-    clearSelection();
+    clearHandSelection();
     const errorMsg = result.message || "Can't discard this card";
     showErrorMessage(errorMsg);
   }
@@ -190,7 +190,7 @@ async function buildWonderFromDiscard() {
 function clearDiscardSelection() {
   selectedDiscardCardId = null;
   selectedDiscardCardImage = null;
-  originalClearSelection();
+  clearHandSelection();
   
   // Reset button text and visibility
   const playBtn = document.getElementById("playButton");
@@ -204,17 +204,12 @@ function clearDiscardSelection() {
   discardBtn.style.display = "block";
 }
 
-// Store original functions
-const originalPlayCard = playCard;
-const originalBuildWonder = buildWonder;
-const originalClearSelection = clearSelection;
-
 // Override playCard to handle both hand and discard cards
 async function playCard() {
   if (selectedDiscardCardId !== null) {
     await playCardFromDiscard();
   } else {
-    await originalPlayCard();
+    await playHandCard();
   }
 }
 
@@ -223,7 +218,7 @@ async function buildWonder() {
   if (selectedDiscardCardId !== null) {
     await buildWonderFromDiscard();
   } else {
-    await originalBuildWonder();
+    await buildWonderWithHandCard();
   }
 }
 
@@ -232,6 +227,6 @@ function clearSelection() {
   if (selectedDiscardCardId !== null) {
     clearDiscardSelection();
   } else {
-    originalClearSelection();
+    clearHandSelection();
   }
 }

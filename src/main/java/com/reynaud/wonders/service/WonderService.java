@@ -134,6 +134,9 @@ public class WonderService {
         Collections.shuffle(wonderNames);
         Random random = new Random();
 
+        //TODO: Remove this now that the player get to choose the side with the WonderDeciderController
+        // Keep only setWonderName assignement to the actual wonder name, and set wonder to null
+        // then change WonderDeciderController to not rely on existing wonder in player state but only on wonder name
         for (int i = 0; i < playerStates.size(); i++) {
             String wonderName = wonderNames.get(i % wonderNames.size());
             List<WonderEntity> wonderFaces = wondersByName.get(wonderName);
@@ -143,6 +146,9 @@ public class WonderService {
             playerStates.get(i).setWonder(selectedWonder);
             playerStates.get(i).setWonderStage(0);
             playerStates.get(i).setResources(selectedWonder.getStartingResources());
+
+            // Set wonderName to null for testing purposes
+            playerStates.get(i).setWonderName(null);
             
             loggingService.info("Wonder assigned to player - Player: " + playerStates.get(i).getUser().getUsername() + ", Wonder: " + selectedWonder.getName() + ", Face: " + selectedWonder.getFace() + ", GameID: " + game.getId(), "WonderService.handleGameCreation");
             

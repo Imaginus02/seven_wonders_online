@@ -42,6 +42,9 @@ public class PlayerStateEntity {
     @Column(nullable = false)
     private Integer victoryPoints = 0;
 
+    @Column
+    private String wonderName;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "wonder_id")
     private WonderEntity wonder; // Reference to the wonder board
@@ -179,6 +182,14 @@ public class PlayerStateEntity {
 
     public void setVictoryPoints(Integer victoryPoints) {
         this.victoryPoints = victoryPoints;
+    }
+
+    public String getWonderName() {
+        return wonderName;
+    }
+
+    public void setWonderName(String wonderName) {
+        this.wonderName = wonderName;
     }
 
     public WonderEntity getWonder() {

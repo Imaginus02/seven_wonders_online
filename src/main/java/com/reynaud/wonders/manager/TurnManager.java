@@ -104,15 +104,30 @@ public class TurnManager {
 
                 applyPendingEffects(gameId, EnumSet.of(EffectTiming.END_OF_AGE_AFTER_DISCARD));
 
-                
+                // Do the war before moving to the next age
+                Integer ageMilitaryPoints = (switch (game.getCurrentAge()) {
+                    case AGE_I -> 1;
+                    case AGE_II -> 3;
+                    case AGE_III -> 5;
+                    default -> 0;
+                });
 
+                for (PlayerStateEntity ps : playerStateService.getPlayerStatesByGameId(gameId)) {
+                    if (ps.getMilitaryPoints() > ps.getLeftNeighbor().getMilitaryPoints()) {
+                        ps.setVictoryPoints(ps.getVictoryPoints() + ageMilitaryPoints);
+                    } else if (ps.getMilitaryPoints() < ps.getLeftNeighbor().getMilitaryPoints()) {
+                        ps.setVictoryPoints(ps.getVictoryPoints() - 1);
+                    }
+                }
+                
+                // Move to next age and distribute new hands
                 game.setCurrentAge(Age.getNextAge(game.getCurrentAge()));
                 loggingService.info("Age advanced - GameID: " + gameId + ", NewAge: " + game.getCurrentAge(), "TurnManager.handleEndOfTurn");
                 
                 if (game.getCurrentAge() == null) {
                     applyPendingEffects(gameId, EnumSet.of(EffectTiming.END_OF_GAME));
                     loggingService.info("Game complete - All ages finished - GameID: " + gameId, "TurnManager.handleEndOfTurn");
-                    // TODO: Implement end game scoring and logic
+                    gameStateManager.finishGame(game);
                     return;
                 }
                 cardDistributionManager.distributeCards(game);

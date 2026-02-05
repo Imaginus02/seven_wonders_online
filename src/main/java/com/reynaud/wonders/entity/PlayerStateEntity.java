@@ -39,6 +39,7 @@ public class PlayerStateEntity {
     @Column(nullable = false)
     private Integer militaryPoints = 0;
 
+    //TODO: Make this a hash map with key CardType enum and value Integer, to keep track of points category
     @Column(nullable = false)
     private Integer victoryPoints = 0;
 

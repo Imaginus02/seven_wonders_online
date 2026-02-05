@@ -2,7 +2,7 @@ package com.reynaud.wonders.manager;
 
 import com.reynaud.wonders.dao.GameDAO;
 import com.reynaud.wonders.entity.GameEntity;
-import com.reynaud.wonders.entity.UserEntity;
+import com.reynaud.wonders.entity.PlayerStateEntity;
 import com.reynaud.wonders.model.GameStatus;
 import com.reynaud.wonders.service.LoggingService;
 import org.springframework.stereotype.Component;
@@ -60,12 +60,21 @@ public class GameStateManager {
      * @return the updated game entity
      */
     @Transactional
-    public GameEntity finishGame(GameEntity game, UserEntity winner) {
-        loggingService.info("Finishing game - GameID: " + game.getId() + ", Winner: " + (winner != null ? winner.getUsername() + " (ID: " + winner.getId() + ")" : "No winner"), "GameStateManager.finishGame");
+    public GameEntity finishGame(GameEntity game) {
+        loggingService.info("Finishing game - GameID: " + game.getId(), "GameStateManager.finishGame");
         game.setStatus(GameStatus.FINISHED);
         game.setFinishedAt(LocalDateTime.now());
-        game.setWinner(winner);
-        loggingService.info("Game finished successfully - GameID: " + game.getId() + ", FinishedAt: " + game.getFinishedAt() + ", Winner: " + (winner != null ? winner.getUsername() : "None"), "GameStateManager.finishGame");
+
+        // TODO: Implement the Olympia B stage 3 effect that allows you to copy one of your neighbors' violet cards for end game scoring, which may impact the winner
+
+        //TODO: Implement a proper calculate point function
+        game.getPlayerStates().forEach(playerState -> {
+            playerState.setVictoryPoints(playerState.getVictoryPoints() + playerState.getCoins() / 3);
+        });
+        PlayerStateEntity winner = game.getPlayerStates().stream().max((p1, p2) -> p1.getVictoryPoints().compareTo(p2.getVictoryPoints())).orElseThrow();
+        game.setWinner(winner.getUser());
+
+        loggingService.info("Game finished successfully - GameID: " + game.getId() + ", FinishedAt: " + game.getFinishedAt(), "GameStateManager.finishGame");
         return gameDAO.save(game);
     }
 

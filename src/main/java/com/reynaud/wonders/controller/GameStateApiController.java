@@ -408,7 +408,15 @@ public class GameStateApiController {
         boolean actionSuccess = false;
         switch (action) {
             case "play":
-                actionSuccess = cardPlayManager.playCard(playerState, cardToPlay);
+                // TODO: Move this check somewhere else
+                if (playerState.getPendingEffects().stream().anyMatch(effect -> effect.getEffectId() == "OLYMPIA_A_STAGE_2_FIRST_CARD_FREE")
+                &&
+                !playerState.getHand().stream().anyMatch(card -> card.getAge() == game.getCurrentAge())) {
+                    loggingService.info("Applying OLYMPIA_A_STAGE_2_FIRST_CARD_FREE effect - GameID: " + gameId + ", Player: " + user.getUsername(), "GameStateApiController.cardAction");
+                    actionSuccess = cardPlayManager.playCard(playerState, cardToPlay, true);
+                } else {
+                     actionSuccess = cardPlayManager.playCard(playerState, cardToPlay);
+                }
                 break;
             case "build":
                 actionSuccess = wonderBuildManager.buildWonderWithCard(playerState, cardToPlay);

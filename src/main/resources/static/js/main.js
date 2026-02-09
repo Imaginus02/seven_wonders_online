@@ -1,14 +1,8 @@
 // Initialize the application
 async function init() {
   // Load and render initial game state
-  cards = await fetchCardsFromAPI();
-  renderHand();
-  await Promise.all([loadWonder(), loadCardBacks(), loadCoins(), loadPlayedCards()]);
-  await loadDiscardedCards();
-  
-  // Load and render players list
-  const players = await fetchPlayersFromAPI();
-  renderPlayersList(players);
+  const state = await getPlayerState();
+  applyPlayerState(state);
 
   // Setup button event listeners
   const playBtn = document.getElementById("playButton");

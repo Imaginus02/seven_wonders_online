@@ -22,17 +22,24 @@ async function showOtherPlayer(playerId) {
     return showSelfView();
   }
   setSelfViewUI(false);
-  const state = await fetchPlayerStateFromAPI(playerId);
-  renderWonder(state.wonder);
-  renderCoins(state.coins);
-  renderPlayed(state.playedCards);
-  renderCardBacks(state.cardBacks);
+  const state = await getPlayerState();
+  const player = (state.players || []).find((p) => p.id === playerId);
+  const publicState = (player && player.state) || player || {};
+  const wonderImage = publicState.wonder || publicState.wonderImage || "placeholder.png";
+  renderWonder(wonderImage);
+  renderCoins(publicState.coins ?? 0);
+  renderPlayed(publicState.playedCards || []);
+  renderCardBacks(publicState.cardBacks || []);
   renderDiscarded([]); // Hide discard contents when viewing others (not visible)
 }
 
 // Show self view with all player info
 async function showSelfView() {
   setSelfViewUI(true);
+  if (!lastPlayerState) {
+    await reloadAllGameData();
+    return;
+  }
   await Promise.all([loadWonder(), loadCardBacks(), loadCoins(), loadPlayedCards()]);
   await loadDiscardedCards();
   renderHand();

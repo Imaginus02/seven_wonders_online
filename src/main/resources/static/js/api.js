@@ -1,113 +1,25 @@
-// Fetch cards in hand from API
-async function fetchCardsFromAPI() {
-  try {
-    const response = await fetch(`/api/hand?gameId=${gameId}`);
-    const data = await response.json();
-    console.log('[API] Hand cards:', data.cards);
-    return data.cards;
-  } catch (error) {
-    console.error('Error fetching cards:', error);
-    return []; // fallback to empty array
-  }
-}
+function normalizePlayerState(raw = {}) {
+  const normalizedPlayers = (raw.players || []).map((player) => {
+    const normalizedState = player.state || {
+      wonder: player.wonder || player.wonderImage || null,
+      coins: player.coins ?? 0,
+      playedCards: player.playedCards || [],
+      cardBacks: player.cardBacks || []
+    };
+    return { ...player, state: normalizedState };
+  });
 
-// Fetch wonder from API
-async function fetchWonderFromAPI() {
-  try {
-    const response = await fetch(`/api/wonder?gameId=${gameId}`);
-    const data = await response.json();
-    console.log('[API] Wonder:', data.wonderImage);
-    return data.wonderImage;
-  } catch (error) {
-    console.error('Error fetching wonder:', error);
-    return null; // display an error
-  }
-}
-
-// Fetch card backs from API
-async function fetchCardBacksFromAPI() {
-  try {
-    const response = await fetch(`/api/card-backs?gameId=${gameId}`);
-    const data = await response.json();
-    console.log('[API] Card backs:', data.cardBacks);
-    return data.cardBacks; // Array of card backs for wonder cards
-  } catch (error) {
-    console.error('Error fetching card backs:', error);
-    return []; // fallback to empty array
-  }
-}
-
-// Fetch coins from API
-async function fetchCoinsFromAPI() {
-  try {
-    const response = await fetch(`/api/coins?gameId=${gameId}`);
-    const data = await response.json();
-    console.log('[API] Coins:', data.coins);
-    return data.coins;
-  } catch (error) {
-    console.error('Error fetching coins:', error);
-    return 0; // fallback to zero coins
-  }
-}
-
-// Fetch played cards from API
-async function fetchPlayedCardsFromAPI() {
-  try {
-    const response = await fetch(`/api/played?gameId=${gameId}`);
-    const data = await response.json();
-    console.log('[API] Played cards:', data.playedCards);
-    return data.playedCards;
-  } catch (error) {
-    console.error('Error fetching played cards:', error);
-    return []; // fallback to empty array
-  }
-}
-
-// Fetch discarded cards from API
-async function fetchDiscardedCardsFromAPI() {
-  try {
-    const response = await fetch(`/api/discarded?gameId=${gameId}`);
-    const data = await response.json();
-    console.log('[API] Discarded cards:', data.discarded);
-    return data.discarded;
-  } catch (error) {
-    console.error('Error fetching discarded cards:', error);
-    return []; // fallback to empty array
-  }
-}
-
-// Fetch players list from API
-async function fetchPlayersFromAPI() {
-  try {
-    const response = await fetch(`/api/players?gameId=${gameId}`);
-    const data = await response.json();
-    console.log('[API] Players:', data.players);
-    return data.players;
-  } catch (error) {
-    console.error('Error fetching players:', error);
-    return [{ id: selfPlayerId, name: "You" }]; // fallback to mock data
-  }
-}
-
-// Fetch a specific player's public state (wonder/coins/played)
-async function fetchPlayerStateFromAPI(playerId) {
-  try {
-    const response = await fetch(`/api/player/${playerId}?gameId=${gameId}`);
-    const data = await response.json();
-    console.log(`[API] Player state (${playerId}):`, data);
-    return { wonder: data.wonderImage, coins: data.coins, playedCards: data.playedCards, cardBacks: data.cardBacks };
-  } catch (error) {
-    console.error('Error fetching player state:', error);
-    // Fallback to mock data
-    if (playerId === selfPlayerId) {
-      return { wonder: null, coins: 0, playedCards: [], cardBacks: [] };
-    }
-    const found = otherPlayersMock.find((p) => p.id === playerId);
-    if (found) {
-      return { wonder: found.wonder, coins: found.coins, playedCards: found.playedCards, cardBacks: found.cardBacks };
-    }
-    return { wonder: null, coins: 0, playedCards: [], cardBacks: [] };
-  }
+  return {
+    hasPlayedThisTurn: raw.hasPlayedThisTurn ?? false,
+    hand: raw.hand || raw.cards || [],
+    wonder: raw.wonder || raw.wonderImage || null,
+    coins: raw.coins ?? 0,
+    playedCards: raw.playedCards || [],
+    cardBacks: raw.cardBacks || [],
+    discarded: raw.discarded || [],
+    availableActions: raw.availableActions || [],
+    players: normalizedPlayers
+  };
 }
 
 // Send card action to API
@@ -136,16 +48,29 @@ async function sendCardAction(action, cardName) {
   }
 }
 
-// Fetch available actions from API
-async function fetchAvailableActionsFromAPI() {
+//     * - hasPlayedThisTurn: Whether the player has played this turn
+//     * - hand: The player's current hand cards
+//     * - wonder: The player's wonder image
+//     * - coins: The player's coin count
+//     * - playedCards: Cards the player has played
+//     * - cardBacks: Cards used to build the wonder
+//     * - discarded: Discard pile cards
+//     * - availableActions: List of actions the player can take (play, build, discard, build_from_discard)
+//     * - players: Array of other players with:
+//     *   - id: Player state ID
+//     *   - name: Player username
+//     *   - state: Public player state (wonder, coins, playedCards, cardBacks)
+//     *   - isNeighbor: Whether the player is a left or right neighbor
+async function getPlayerState() {
   try {
-    const response = await fetch(`/api/available-actions?gameId=${gameId}`);
+    const response = await fetch(`/api/get-player-game-state?gameId=${gameId}`);
     const data = await response.json();
-    console.log('[API] Available actions:', data.availableActions);
-    return data.availableActions;
+    const normalized = normalizePlayerState(data);
+    console.log('[API] Player state:', normalized);
+    return normalized;
   } catch (error) {
-    console.error('Error fetching available actions:', error);
-    return [];
+    console.error('Error fetching player state:', error);
+    return normalizePlayerState({});
   }
 }
 

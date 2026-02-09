@@ -4,12 +4,115 @@ let turnBlockerInterval = null;
 let isBlockingTurn = false;
 let currentAvailableActions = [];
 
+function isSelfViewActive() {
+  const backBtn = document.getElementById("backToSelf");
+  return !backBtn || backBtn.hidden === true;
+}
+
+function arePrimitiveArraysEqual(a = [], b = []) {
+  if (a === b) return true;
+  if (!Array.isArray(a) || !Array.isArray(b)) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+function getDiscardKey(card) {
+  if (typeof card === 'string') return `s:${card}`;
+  if (!card || typeof card !== 'object') return 'o:';
+  return `o:${card.id ?? ''}:${card.image ?? ''}`;
+}
+
+function areDiscardedEqual(a = [], b = []) {
+  if (a === b) return true;
+  if (!Array.isArray(a) || !Array.isArray(b)) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (getDiscardKey(a[i]) !== getDiscardKey(b[i])) return false;
+  }
+  return true;
+}
+
+function arePlayersListEqual(a = [], b = []) {
+  if (a === b) return true;
+  if (!Array.isArray(a) || !Array.isArray(b)) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i].id !== b[i].id || a[i].name !== b[i].name) return false;
+  }
+  return true;
+}
+
+function updateUiFromState(state) {
+  if (!state) return;
+  const isSelf = isSelfViewActive();
+
+  if (!lastPlayerState) {
+    if (isSelf && typeof applyPlayerState === 'function') {
+      applyPlayerState(state);
+    }
+    lastPlayerState = state;
+    return;
+  }
+
+  if (isSelf) {
+    const prevHand = lastPlayerState.hand || [];
+    const nextHand = state.hand || [];
+    if (!arePrimitiveArraysEqual(prevHand, nextHand)) {
+      cards = nextHand;
+      renderHand();
+    }
+
+    const prevWonder = lastPlayerState.wonder || null;
+    const nextWonder = state.wonder || null;
+    if (prevWonder !== nextWonder) {
+      renderWonder(nextWonder || "placeholder.png");
+    }
+
+    const prevCardBacks = lastPlayerState.cardBacks || [];
+    const nextCardBacks = state.cardBacks || [];
+    if (!arePrimitiveArraysEqual(prevCardBacks, nextCardBacks)) {
+      renderCardBacks(nextCardBacks);
+    }
+
+    const prevCoins = lastPlayerState.coins ?? 0;
+    const nextCoins = state.coins ?? 0;
+    if (prevCoins !== nextCoins) {
+      renderCoins(nextCoins);
+    }
+
+    const prevPlayed = lastPlayerState.playedCards || [];
+    const nextPlayed = state.playedCards || [];
+    if (!arePrimitiveArraysEqual(prevPlayed, nextPlayed)) {
+      renderPlayed(nextPlayed);
+    }
+
+    const prevDiscarded = lastPlayerState.discarded || [];
+    const nextDiscarded = state.discarded || [];
+    if (!areDiscardedEqual(prevDiscarded, nextDiscarded)) {
+      currentDiscardedCards = nextDiscarded;
+      renderDiscarded(currentDiscardedCards, canSelectDiscard);
+    }
+  }
+
+  const prevPlayers = lastPlayerState.players || [];
+  const nextPlayers = state.players || [];
+  if (!arePlayersListEqual(prevPlayers, nextPlayers)) {
+    renderPlayersList(nextPlayers);
+  }
+
+  lastPlayerState = state;
+}
+
 /**
  * Check available actions and update UI accordingly
  */
 async function checkAvailableActions() {
   try {
-    const actions = await fetchAvailableActionsFromAPI();
+    const state = await getPlayerState();
+    const actions = state.availableActions || [];
     currentAvailableActions = actions;
     
     console.log('[TurnBlocker] Available actions:', actions);
@@ -26,11 +129,8 @@ async function checkAvailableActions() {
       // Turn changed - player can play again
       hideTurnBlockerOverlay();
       isBlockingTurn = false;
-      // Turn has changed - reload all game data
-      console.log('[TurnBlocker] Turn changed - reloading game data');
-      if (typeof reloadAllGameData === 'function') {
-        await reloadAllGameData();
-      }
+      // Turn has changed - update data seamlessly
+      console.log('[TurnBlocker] Turn changed - updating game data');
     } else if (canBuildFromDiscard && isBlockingTurn) {
       // Special action available - hide blocker
       hideTurnBlockerOverlay();
@@ -38,9 +138,15 @@ async function checkAvailableActions() {
     }
     
     // Enable/disable discard cards based on build_from_discard action
-    if (typeof enableDiscardCardSelection === 'function') {
-      enableDiscardCardSelection(canBuildFromDiscard);
+    if (isSelfViewActive()) {
+      if (typeof enableDiscardCardSelection === 'function') {
+        enableDiscardCardSelection(canBuildFromDiscard);
+      }
+    } else {
+      canSelectDiscard = canBuildFromDiscard;
     }
+
+    updateUiFromState(state);
   } catch (error) {
     console.error('[TurnBlocker] Error checking available actions:', error);
   }

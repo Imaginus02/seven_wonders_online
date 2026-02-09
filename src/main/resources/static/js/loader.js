@@ -1,52 +1,50 @@
+let lastPlayerState = null;
+
+function applyPlayerState(state) {
+  lastPlayerState = state || {};
+
+  cards = lastPlayerState.hand || [];
+  renderHand();
+
+  const wonderImage = lastPlayerState.wonder || "placeholder.png";
+  renderWonder(wonderImage);
+  renderCardBacks(lastPlayerState.cardBacks || []);
+  renderCoins(lastPlayerState.coins ?? 0);
+  renderPlayed(lastPlayerState.playedCards || []);
+
+  currentDiscardedCards = lastPlayerState.discarded || [];
+  renderDiscarded(currentDiscardedCards, canSelectDiscard);
+
+  renderPlayersList(lastPlayerState.players || []);
+}
+
 // Load wonder and render it
-async function loadWonder() {
-  const wonderImage = await fetchWonderFromAPI();
-  const wonderImgEl = document.getElementById("wonderImage");
-  wonderImgEl.src = wonderBase + (wonderImage || "placeholder.png");
+async function loadWonder(state = lastPlayerState) {
+  const wonderImage = (state && state.wonder) || "placeholder.png";
+  renderWonder(wonderImage);
 }
 
 // Load card backs and render them
-async function loadCardBacks() {
-  const cardBackImages = await fetchCardBacksFromAPI();
-  renderCardBacks(cardBackImages);
+async function loadCardBacks(state = lastPlayerState) {
+  renderCardBacks((state && state.cardBacks) || []);
 }
 
 // Load coins and render them
-async function loadCoins() {
-  const coinsValue = await fetchCoinsFromAPI();
-  const coinsIconEl = document.getElementById("coinsIcon");
-  const coinsValueEl = document.getElementById("coinsValue");
-  coinsIconEl.src = coinAsset;
-  coinsValueEl.textContent = coinsValue;
+async function loadCoins(state = lastPlayerState) {
+  renderCoins(state && typeof state.coins === 'number' ? state.coins : 0);
 }
 
 // Load played cards and render them
-async function loadPlayedCards() {
-  const playedCards = await fetchPlayedCardsFromAPI();
-  const gridEl = document.getElementById("playedGrid");
-  const emptyEl = document.getElementById("playedEmpty");
-  gridEl.innerHTML = "";
-
-  if (!playedCards || playedCards.length === 0) {
-    emptyEl.hidden = false;
-    return;
-  }
-
-  emptyEl.hidden = true;
-  playedCards.forEach((card) => {
-    const img = document.createElement("img");
-    img.src = toSrc(card);
-    img.alt = card;
-    gridEl.appendChild(img);
-  });
+async function loadPlayedCards(state = lastPlayerState) {
+  renderPlayed((state && state.playedCards) || []);
 }
 
 // Load discarded cards and render them
 let currentDiscardedCards = [];
 let canSelectDiscard = false;
 
-async function loadDiscardedCards() {
-  currentDiscardedCards = await fetchDiscardedCardsFromAPI();
+async function loadDiscardedCards(state = lastPlayerState) {
+  currentDiscardedCards = (state && state.discarded) || [];
   renderDiscarded(currentDiscardedCards, canSelectDiscard);
 }
 
@@ -63,25 +61,8 @@ async function reloadAllGameData() {
   console.log('[Loader] Reloading all game data...');
   
   try {
-    // Reload hand cards
-    cards = await fetchCardsFromAPI();
-    renderHand();
-    
-    // Reload all parallel data
-    await Promise.all([
-      loadWonder(),
-      loadCardBacks(),
-      loadCoins(),
-      loadPlayedCards()
-    ]);
-    
-    // Reload discarded cards
-    await loadDiscardedCards();
-    
-    // Reload players list
-    const players = await fetchPlayersFromAPI();
-    renderPlayersList(players);
-    
+    const state = await getPlayerState();
+    applyPlayerState(state);
     console.log('[Loader] All game data reloaded successfully');
   } catch (error) {
     console.error('[Loader] Error reloading game data:', error);

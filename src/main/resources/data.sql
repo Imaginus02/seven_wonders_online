@@ -1,6 +1,19 @@
+-- =====================================================================
+-- SEVEN WONDERS - DATABASE INITIALIZATION
+-- =====================================================================
+-- This script initializes the database with static game data and test users
+-- Static data (cards, effects, wonders) use MERGE to prevent duplicates
+-- Test users are cleared and recreated on each restart
+-- =====================================================================
+
+-- =====================================================================
+-- STATIC GAME DATA - Cards, Effects, Wonders
+-- These records are inserted only if they don't exist (idempotent)
+-- =====================================================================
+
 -- SQL script to initialize card data
 -- Now with min_player_count to specify how many players needed for this card
-INSERT INTO cards (name, type, age, cost, coin_cost, min_player_count, incoming_links, outgoing_links, image) VALUES
+MERGE INTO cards (name, type, age, cost, coin_cost, min_player_count, incoming_links, outgoing_links, image) KEY(name, age, min_player_count) VALUES
 -- Cards for 3+ players
 
     -- Brown Resource Cards
@@ -264,15 +277,6 @@ INSERT INTO effects (effect_id, description, timing, parameters) VALUES
 -- WONDER EFFECTS - Rhodes B
 ('RHODES_B_STAGE_1_VP_3_COINS_3_MILITARY_1', 'Rhodes B Stage 1: +3 VP, +3 Coins, +1 Military', 'IMMEDIATE', 'VP:3|COINS:3|MIL:1'),
 ('RHODES_B_STAGE_2_VP_4_COINS_4_MILITARY_1', 'Rhodes B Stage 2: +4 VP, +4 Coins, +1 Military', 'IMMEDIATE', 'VP:4|COINS:4|MIL:1');
-
-
--- Test Users (passwords: alice="password1", bob="password2", charlie="password3")
--- Using {noop} prefix for plain text passwords (for testing only)
-INSERT INTO users (username, password, role) VALUES
-('alice', '{noop}password1', 'ROLE_USER'),
-('bob', '{noop}password2', 'ROLE_USER'),
-('charlie', '{noop}password3', 'ROLE_USER'),
-('admin', '{noop}demo', 'ROLE_ADMIN');
 
 INSERT INTO wonders (name, face, starting_resources, stage_costs, number_of_stages, image) VALUES
 -- Alexandria A

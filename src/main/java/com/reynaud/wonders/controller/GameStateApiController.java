@@ -538,12 +538,14 @@ public class GameStateApiController {
      * Handles the BUILD_FROM_DISCARD effect by allowing a player to select a card from the discard pile,
      * remove it, and either play it without cost or use it to build their wonder.
      */
+    @Deprecated(forRemoval = true)
     @PostMapping("/select-discard-card")
     public ResponseEntity<Map<String, String>> selectDiscardCard(
             @RequestParam Long gameId,
             @RequestParam Long cardId,
             @RequestParam String action,
             Authentication authentication) {
+        loggingService.warning("Deprecated function","GameStateApiController.selectDiscardCard");
         if (authentication == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -737,6 +739,193 @@ public class GameStateApiController {
             
         }
         response.put("players", players);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * POST /api/play-card
+     * Unified endpoint for all card actions (play, build, discard).
+     * Can handle cards from the player's hand or from the discard pile (when BUILD_FROM_DISCARD effect is active).
+     * 
+     * Request body should contain:
+     * - gameId: The game ID
+     * - cardId: The card ID
+     * - action: "play", "build", or "discard"
+     * - fromDiscard: (optional) true if the card is from the discard pile, false or omitted if from hand
+     */
+    @PostMapping("/play-card")
+    public ResponseEntity<Map<String, Object>> playCard(
+            @RequestBody Map<String, Object> request,
+            Authentication authentication) {
+        
+        if (authentication == null) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "User not authenticated");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        }
+
+        // Parse request parameters
+        Long gameId = ((Number) request.get("gameId")).longValue();
+        Long cardId = ((Number) request.get("cardId")).longValue();
+        String action = (String) request.get("action");
+        Boolean fromDiscard = request.containsKey("fromDiscard") ? (Boolean) request.get("fromDiscard") : false;
+        
+        // Validate action type
+        if (!List.of("play", "build", "discard").contains(action)) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Invalid action type. Must be 'play', 'build', or 'discard'");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+
+        // Discard action is only valid from hand
+        if ("discard".equals(action) && fromDiscard) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Cannot discard a card from discard pile");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+
+        UserEntity user = userService.findByUsername(authentication.getName());
+        if (user == null) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "User not authenticated");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        }
+
+        PlayerStateEntity playerState = playerStateService.getPlayerStateByGameIdAndUserId(gameId, user.getId());
+        if (playerState == null) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Player state not found");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+
+        GameEntity game = gameService.getGameById(gameId);
+        if (game == null) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Game not found");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+
+        CardEntity cardToPlay;
+        boolean isFromDiscard = fromDiscard != null && fromDiscard;
+
+        if (isFromDiscard) {
+            // Playing from discard pile
+            cardToPlay = game.getDiscard().stream()
+                    .filter(card -> card.getId().equals(cardId))
+                    .findFirst()
+                    .orElse(null);
+
+            if (cardToPlay == null) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "Card not found in discard pile");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            // Verify player has the BUILD_FROM_DISCARD effect
+            boolean hasBuildFromDiscardEffect = playerState.getPendingEffects().stream()
+                    .anyMatch(e -> "BUILD_FROM_DISCARD".equals(e.getEffectId()));
+            
+            if (!hasBuildFromDiscardEffect) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "Cannot play from discard without BUILD_FROM_DISCARD effect");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            // Remove card from discard pile
+            game.getDiscard().remove(cardToPlay);
+            loggingService.info("Card removed from discard - GameID: " + gameId + ", CardId: " + cardId + ", Card: " + cardToPlay.getName() + ", Action: " + action, "GameStateApiController.playCard");
+        } else {
+            // Playing from hand
+            cardToPlay = playerState.getHand().stream()
+                    .filter(card -> card.getId().equals(cardId))
+                    .findFirst()
+                    .orElse(null);
+
+            if (cardToPlay == null) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "Card not found in hand");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            if (playerState.getHasPlayedThisTurn()) {
+                loggingService.warning("Player already played this turn - GameID: " + gameId + ", User: " + user.getUsername(), "GameStateApiController.playCard");
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "Player has already played this turn");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+        }
+
+        loggingService.info("Processing card action - Action: " + action + ", Card: " + cardToPlay.getName() + ", Player: " + user.getUsername() + ", GameID: " + gameId + ", FromDiscard: " + isFromDiscard, "GameStateApiController.playCard");
+
+        // Perform the action
+        boolean actionSuccess = false;
+        switch (action) {
+            case "play":
+                if (isFromDiscard) {
+                    // Cards from discard are played for free
+                    actionSuccess = cardPlayManager.playCard(playerState, cardToPlay, true);
+                } else {
+                    // Check for Olympia A Stage 2 effect (first card of age is free)
+                    if (playerState.getPendingEffects().stream().anyMatch(effect -> "OLYMPIA_A_STAGE_2_FIRST_CARD_FREE".equals(effect.getEffectId()))
+                            && !playerState.getHand().stream().anyMatch(card -> card.getAge() == game.getCurrentAge())) {
+                        loggingService.info("Applying OLYMPIA_A_STAGE_2_FIRST_CARD_FREE effect - GameID: " + gameId + ", Player: " + user.getUsername(), "GameStateApiController.playCard");
+                        actionSuccess = cardPlayManager.playCard(playerState, cardToPlay, true);
+                    } else {
+                        actionSuccess = cardPlayManager.playCard(playerState, cardToPlay);
+                    }
+                }
+                break;
+            case "build":
+                actionSuccess = wonderBuildManager.buildWonderWithCard(playerState, cardToPlay);
+                break;
+            case "discard":
+                cardPlayManager.discardCard(playerState, cardToPlay, game.getDiscard());
+                gameService.updateGame(game);
+                actionSuccess = true;
+                break;
+        }
+
+        if (!actionSuccess) {
+            // If action failed and card was from discard, put it back
+            if (isFromDiscard) {
+                game.getDiscard().add(cardToPlay);
+            }
+            loggingService.warning("Card action failed - Action: " + action + ", Card: " + cardToPlay.getName() + ", Player: " + user.getUsername() + ", GameID: " + gameId, "GameStateApiController.playCard");
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Failed to " + action + " the card");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+
+        loggingService.info("Card action successful - Action: " + action + ", Card: " + cardToPlay.getName() + ", Player: " + user.getUsername() + ", GameID: " + gameId, "GameStateApiController.playCard");
+        
+        // If playing from discard, remove the BUILD_FROM_DISCARD effect
+        if (isFromDiscard) {
+            playerState.getPendingEffects().removeIf(e -> "BUILD_FROM_DISCARD".equals(e.getEffectId()));
+        } else {
+            // Mark that player has played this turn (only for hand cards)
+            playerState.setHasPlayedThisTurn(true);
+        }
+
+        // Handle end of turn
+        turnManager.handleEndOfTurn(game, gameId, playerState);
+        playerStateService.updatePlayerState(playerState);
+        gameService.updateGame(game);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("card", cardToPlay.getName());
+        response.put("action", action);
         return ResponseEntity.ok(response);
     }
 

@@ -245,7 +245,7 @@ public class CardPlayManager {
      * @param playerState the player state entity
      * @param cardToPlay the card being played
      */
-    private void applyCardEffect(PlayerStateEntity playerState, CardEntity cardToPlay) {
+    public void applyCardEffect(PlayerStateEntity playerState, CardEntity cardToPlay) {
         String effectId = mapCardToEffectId(cardToPlay.getName());
         
         if (effectId == null) {

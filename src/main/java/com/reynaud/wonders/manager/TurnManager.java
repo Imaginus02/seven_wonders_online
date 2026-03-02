@@ -167,6 +167,7 @@ public class TurnManager {
         return false;
     }
 
+    //TODO: Duplicate code with GameStateManager, find a way to handle it in a more generic way
     private void applyPendingEffects(Long gameId, EnumSet<EffectTiming> timings) {
         List<PlayerStateEntity> players = playerStateService.getPlayerStatesByGameId(gameId);
 

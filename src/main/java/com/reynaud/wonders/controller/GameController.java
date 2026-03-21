@@ -54,23 +54,6 @@ public class GameController {
         return "games";
     }
     
-    //TODO: Fix this, error 500 while getting because of wonder
-    @GetMapping("/{id}")
-    public String gamePage(@PathVariable Long id, Authentication authentication, Model model) {
-        loggingService.debug("Accessing game page - GameID: " + id + ", User: " + (authentication != null ? authentication.getName() : "not authenticated"), "GameController.gamePage");
-        GameEntity game = gameService.getGameById(id);
-        if (game == null) {
-            loggingService.warning("Game not found - GameID: " + id, "GameController.gamePage");
-            return "redirect:/games";
-        }
-
-        model.addAttribute("game", gameService.convertToDTO(game));
-        if (authentication != null) {
-            model.addAttribute("username", authentication.getName());
-        }
-        return "game";
-    }
-
     @GetMapping("/create")
     public String createGamePage(Authentication authentication, Model model) {
         loggingService.debug("Accessing create game page - User: " + (authentication != null ? authentication.getName() : "not authenticated"), "GameController.createGamePage");

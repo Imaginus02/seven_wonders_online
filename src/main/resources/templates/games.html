@@ -4,93 +4,71 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Games - 7 Wonders Online</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 { margin-bottom: 10px; color: #333; }
-        .welcome { color: #4CAF50; margin-bottom: 20px; }
-        .section { margin-top: 25px; }
-        .section h2 { margin-bottom: 10px; }
-        .game-card {
-            background: #fafafa;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .game-meta { color: #555; }
-        .btn {
-            display: inline-block;
-            padding: 8px 14px;
-            background-color: #2196F3;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        .btn:hover { background-color: #0b7dda; }
-        .btn-primary {
-            background-color: #4CAF50;
-            margin-bottom: 20px;
-        }
-        .btn-primary:hover { background-color: #45a049; }
-        .empty { color: #888; font-style: italic; }
-        .nav { margin-bottom: 15px; }
-        .nav a { color: #2196F3; text-decoration: none; }
-        .nav a:hover { text-decoration: underline; }
-    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link rel="stylesheet" th:href="@{/css/games.css}">
 </head>
 <body>
 <div class="container">
-    <div class="nav"><a href="/home">&larr; Back to Home</a></div>
-    <h1>Games</h1>
-    <p class="welcome" th:if="${username}">Signed in as <strong th:text="${username}">user</strong></p>
-    <a href="/games/create" class="btn btn-primary">+ Create New Game</a>
+    <div class="nav">
+        <a href="/home" class="icon-link">
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+            <span>Back to Home</span>
+        </a>
+    </div>
+
+    <div class="header-section">
+        <h1>Games</h1>
+        <p class="welcome" th:if="${username}">Signed in as <strong th:text="${username}">user</strong></p>
+        <a href="/games/create" class="btn btn-primary">
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+            <span>Create New Game</span>
+        </a>
+    </div>
+
     <div class="section">
-        <h2>My Games</h2>
+        <h2>
+            <span class="material-symbols-outlined" aria-hidden="true">book</span>
+            My Games
+        </h2>
         <div th:if="${#lists.isEmpty(myGames)}" class="empty">You are not in any games yet.</div>
         <div th:each="game : ${myGames}" class="game-card">
             <div>
                 <div><strong>Game #</strong><span th:text="${game.id}">1</span></div>
-                <div class="game-meta">
-                    <span th:text="${game.status}">WAITING</span>
-                    · Players <span th:text="${game.userIds.size()}">0</span>/<span th:text="${game.nbrPlayers}">7</span>
-                    · Turn <span th:text="${game.currentTurn}">0</span>
+                <div class="game-meta game-players"
+                     th:with="otherPlayers=${username != null ? game.usernames.?[#this != #root['username']] : game.usernames}">
+                    <span th:if="${#lists.isEmpty(otherPlayers)}">No other players yet.</span>
+                    <span th:unless="${#lists.isEmpty(otherPlayers)}"
+                          th:text="${#strings.listJoin(otherPlayers, ', ')}">other players</span>
                 </div>
             </div>
-            <a th:href="@{'/games/' + ${game.id}}" class="btn">View status</a>
-            <a th:href="@{'/play?gameId=' + ${game.id}}" class="btn">Play</a>
+            <a th:href="@{'/play?gameId=' + ${game.id}}" class="btn btn-play">
+                <span class="material-symbols-outlined" aria-hidden="true">sports_esports</span>
+                <span>Play</span>
+            </a>
         </div>
     </div>
 
     <div class="section">
-        <h2>Available Games</h2>
-        <div th:if="${#lists.isEmpty(availableGames)}" class="empty">No open games. Create one via API or wait for hosts.</div>
+        <h2>
+            <span class="material-symbols-outlined" aria-hidden="true">public</span>
+            Available Games
+        </h2>
+        <div th:if="${#lists.isEmpty(availableGames)}" class="empty">No open games. Create one to get started!</div>
         <div th:each="game : ${availableGames}" class="game-card">
             <div>
                 <div><strong>Game #</strong><span th:text="${game.id}">1</span></div>
-                <div class="game-meta">
-                    <span th:text="${game.status}">WAITING</span>
-                    · Players <span th:text="${game.userIds.size()}">0</span>/<span th:text="${game.nbrPlayers}">7</span>
-                    · Turn <span th:text="${game.currentTurn}">0</span>
+                <div class="game-meta game-players"
+                     th:with="otherPlayers=${username != null ? game.usernames.?[#this != #root['username']] : game.usernames}">
+                    <span th:if="${#lists.isEmpty(otherPlayers)}">No other players yet.</span>
+                    <span th:unless="${#lists.isEmpty(otherPlayers)}"
+                          th:text="${#strings.listJoin(otherPlayers, ', ')}">other players</span>
                 </div>
             </div>
-            <a th:href="@{'/games/' + ${game.id}}" class="btn">View status</a>
+            <a th:href="@{'/play?gameId=' + ${game.id}}" class="btn btn-play">
+                <span class="material-symbols-outlined" aria-hidden="true">sports_esports</span>
+                <span>Join</span>
+            </a>
         </div>
     </div>
 </div>

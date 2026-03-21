@@ -98,6 +98,6 @@ public class WonderDeciderController {
         model.addAttribute("wonders", wonders);
         model.addAttribute("gameId", gameId);
         model.addAttribute("wonderName", playerState.getWonder().getName());
-        return "choose_wonder_side";
+        return "choose-wonder-side";
     }
 }

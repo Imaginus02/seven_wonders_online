@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose Wonder Side - 7 Wonders Online</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link rel="stylesheet" th:href="@{/css/choose-wonder-side.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a th:href="@{/games}" class="btn btn-secondary back-link">
+                <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+                <span>Back to Games</span>
+            </a>
+        </div>
+
+        <div class="page-header">
+            <h1 class="page-title">Choose Your Wonder Side</h1>
+            <p class="subtitle">
+                Select a side for <strong th:text="${wonderName}">Wonder</strong> to start the game.
+            </p>
+        </div>
+
+        <div class="cards">
+            <form class="wonder-card" th:each="wonder : ${wonders}" th:action="@{/choose-side}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <input type="hidden" name="gameId" th:value="${gameId}">
+                <input type="hidden" name="wonderId" th:value="${wonder.id}">
+
+                <img class="wonder-image"
+                     th:if="${wonder.image}"
+                     th:src="@{'/assets/wonders/' + ${wonder.image}}"
+                     th:alt="${wonder.name}"
+                     onerror="this.style.display='none'">
+
+                <div class="wonder-name" th:text="${wonder.name}">Wonder Name</div>
+                <span class="wonder-face" th:text="'Face ' + ${wonder.face}">Face A</span>
+
+                <div class="actions">
+                    <button type="submit" class="btn btn-primary choose-btn">
+                        <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                        <span>Choose Face <span th:text="${wonder.face}">A</span></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -4,85 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - 7 Wonders Online</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            color: #333;
-        }
-        .welcome {
-            color: #4CAF50;
-            font-size: 1.2em;
-            margin-bottom: 20px;
-        }
-        .logout-btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #f44336;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-        }
-        .logout-btn:hover {
-            background-color: #da190b;
-        }
-        .nav-links {
-            margin-top: 30px;
-            display: flex;
-            gap: 10px;
-        }
-        .nav-link {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #2196F3;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-        }
-        .nav-link:hover {
-            background-color: #0b7dda;
-        }
-        .admin-link {
-            background-color: #9c27b0;
-        }
-        .admin-link:hover {
-            background-color: #7b1fa2;
-        }
-    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link rel="stylesheet" th:href="@{/css/home.css}">
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to 7 Wonders Online!</h1>
-        <p class="welcome">Hello, <span th:text="${username}">User</span>!</p>
-        <p>You have successfully logged in.</p>
-        
-        <div class="nav-links">
-            <a href="/cards" class="nav-link">View Cards</a>
-            <a href="/games" class="nav-link">View Games</a>
-            <a href="/wonders" class="nav-link">View Wonders</a>
-            <a th:if="${isAdmin}" href="/admin/logs" class="nav-link admin-link">🔍 Admin Logs</a>
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <h1>7 Wonders Online</h1>
+                <p>Welcome, <span th:text="${username}">User</span>!</p>
+            </div>
+            <form th:action="@{/logout}" method="post" class="logout-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="logout-btn">
+                    <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+                    <span>Logout</span>
+                </button>
+            </form>
         </div>
-        
-        <form th:action="@{/logout}" method="post" style="margin-top: 20px;">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            <button type="submit" class="logout-btn">Logout</button>
-        </form>
+
+        <!-- Main Sections -->
+        <div class="sections">
+            <!-- View Games Section -->
+            <div class="section">
+                <h2>
+                    <span class="material-symbols-outlined" aria-hidden="true">sports_esports</span>
+                    Games
+                </h2>
+                <div class="section-links">
+                    <a href="/games" class="section-link games">
+                        <span class="material-symbols-outlined" aria-hidden="true">list</span>
+                        <span>View All Games</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Wiki Section -->
+            <div class="section">
+                <h2>
+                    <span class="material-symbols-outlined" aria-hidden="true">library_books</span>
+                    Wiki
+                </h2>
+                <div class="section-links">
+                    <a href="/cards" class="section-link wiki">
+                        <span class="material-symbols-outlined" aria-hidden="true">style</span>
+                        <span>View Cards</span>
+                    </a>
+                    <a href="/wonders" class="section-link wiki">
+                        <span class="material-symbols-outlined" aria-hidden="true">monument</span>
+                        <span>View Wonders</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Admin Section -->
+            <div class="section admin-section" th:classappend="${isAdmin} ? 'visible'">
+                <h2>
+                    <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
+                    Administration
+                </h2>
+                <div class="section-links">
+                    <a href="/admin/logs" class="section-link admin">
+                        <span class="material-symbols-outlined" aria-hidden="true">description</span>
+                        <span>View Logs</span>
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>

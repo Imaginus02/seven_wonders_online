@@ -909,15 +909,16 @@ public class GameStateApiController {
 
         loggingService.info("Card action successful - Action: " + action + ", Card: " + cardToPlay.getName() + ", Player: " + user.getUsername() + ", GameID: " + gameId, "GameStateApiController.playCard");
         
-        // If playing from discard, remove the BUILD_FROM_DISCARD effect
+        // Resolve paused discard flow before resuming end-of-turn processing
         if (isFromDiscard) {
             playerState.getPendingEffects().removeIf(e -> "BUILD_FROM_DISCARD".equals(e.getEffectId()));
+            game.setStatus(GameStatus.PLAYING);
+            loggingService.info("BUILD_FROM_DISCARD resolved - Resuming game - GameID: " + gameId + ", Player: " + user.getUsername(), "GameStateApiController.playCard");
         } else {
             // Mark that player has played this turn (only for hand cards)
             playerState.setHasPlayedThisTurn(true);
         }
 
-        // Handle end of turn
         turnManager.handleEndOfTurn(game, gameId, playerState);
         playerStateService.updatePlayerState(playerState);
         gameService.updateGame(game);

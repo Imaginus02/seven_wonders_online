@@ -1,14 +1,12 @@
 package com.reynaud.wonders.manager;
 
 import com.reynaud.wonders.dao.GameDAO;
-import com.reynaud.wonders.entity.CardEntity;
 import com.reynaud.wonders.entity.GameEntity;
 import com.reynaud.wonders.entity.PlayerStateEntity;
-import com.reynaud.wonders.model.CardType;
 import com.reynaud.wonders.model.EffectTiming;
 import com.reynaud.wonders.model.GameStatus;
-import com.reynaud.wonders.model.Science;
 import com.reynaud.wonders.service.EffectExecutorService;
+import com.reynaud.wonders.service.GameScoringService;
 import com.reynaud.wonders.service.LoggingService;
 import com.reynaud.wonders.service.PlayerStateService;
 
@@ -19,7 +17,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Manager responsible for managing game state transitions.
@@ -35,12 +32,14 @@ public class GameStateManager {
     private final GameDAO gameDAO;
     private final PlayerStateService playerStateService;
     private final EffectExecutorService effectExecutor;
+    private final GameScoringService gameScoringService;
     private final LoggingService loggingService;
 
-    public GameStateManager(GameDAO gameDAO, PlayerStateService playerStateService, EffectExecutorService effectExecutor, LoggingService loggingService) {
+    public GameStateManager(GameDAO gameDAO, PlayerStateService playerStateService, EffectExecutorService effectExecutor, GameScoringService gameScoringService, LoggingService loggingService) {
         this.gameDAO = gameDAO;
         this.playerStateService = playerStateService;
         this.effectExecutor = effectExecutor;
+        this.gameScoringService = gameScoringService;
         this.loggingService = loggingService;
     }
 
@@ -97,17 +96,9 @@ public class GameStateManager {
 
             // Yellow card points are added when constructed
 
-            Map<Science, Integer> scienceSymbols = playerState.getScience();
-            int sciencePoints = scienceSymbols.values().stream().mapToInt(count -> count * count).sum(); // Each symbol type contributes count^2 points
-            sciencePoints += 7 * Math.min(Math.min(scienceSymbols.getOrDefault(Science.TABLET, 0), scienceSymbols.getOrDefault(Science.COMPASS, 0)), scienceSymbols.getOrDefault(Science.GEAR, 0)); // Each complete set of 3 different symbols adds 7 points
-
+            int sciencePoints = gameScoringService.calculateSciencePoints(playerState.getScience());
             playerState.setVictoryPoints(playerState.getVictoryPoints() + sciencePoints);
             loggingService.info("Science points added: " + sciencePoints, "GameStateManager.finishGame");
-
-
-            if (playerState.getPendingEffects().stream().anyMatch(effect -> "OLYMPIA_B_STAGE_3_COPY_VIOLET".equals(effect.getEffectId()))) {
-                findBestGuild(playerState);
-            }
             
         });
         PlayerStateEntity winner = game.getPlayerStates().stream().max((p1, p2) -> p1.getVictoryPoints().compareTo(p2.getVictoryPoints())).orElseThrow();
@@ -115,76 +106,6 @@ public class GameStateManager {
 
         loggingService.info("Game finished successfully - GameID: " + game.getId() + ", FinishedAt: " + game.getFinishedAt(), "GameStateManager.finishGame");
         return gameDAO.save(game);
-    }
-
-    private void findBestGuild(PlayerStateEntity playerState) {
-        List<CardEntity> neighborsGuild = playerState.getLeftNeighbor().getPlayedCards().stream()
-                .filter(card -> card.getType() == CardType.VIOLET)
-                .toList();  
-        neighborsGuild.addAll(playerState.getRightNeighbor().getPlayedCards().stream()
-                .filter(card -> card.getType() == CardType.VIOLET)
-                .toList());
-        int maxPoints = 0;
-        for (CardEntity card : neighborsGuild) {
-            int points;
-            switch (card.getName()) {
-                case "WORKERS_GUILD":
-                    points = playerState.getLeftNeighbor().getPlayedCards().stream()
-                            .filter(c -> c.getType() == CardType.BROWN).toList().size() +
-                            playerState.getRightNeighbor().getPlayedCards().stream()
-                            .filter(c -> c.getType() == CardType.BROWN).toList().size();
-                    break;
-                case "CRAFTSMENS_GUILD":
-                    points = (playerState.getLeftNeighbor().getPlayedCards().stream()
-                            .filter(c -> c.getType() == CardType.GREY).toList().size() +
-                            playerState.getRightNeighbor().getPlayedCards().stream()
-                            .filter(c -> c.getType() == CardType.GREY).toList().size()) * 2;
-                    break;
-                case "MAGISTRATES_GUILD":
-                    points = playerState.getLeftNeighbor().getPlayedCards().stream()
-                            .filter(c -> c.getType() == CardType.BLUE).toList().size() +
-                            playerState.getRightNeighbor().getPlayedCards().stream()
-                            .filter(c -> c.getType() == CardType.BLUE).toList().size();
-                    break;
-                case "TRADERS_GUILD":
-                    points = playerState.getLeftNeighbor().getPlayedCards().stream()
-                            .filter(c -> c.getType() == CardType.YELLOW).toList().size() +
-                            playerState.getRightNeighbor().getPlayedCards().stream()
-                            .filter(c -> c.getType() == CardType.YELLOW).toList().size();
-                    break;
-                case "SPIES_GUILD":
-                    points = playerState.getLeftNeighbor().getPlayedCards().stream()
-                            .filter(c -> c.getType() == CardType.RED).toList().size() +
-                            playerState.getRightNeighbor().getPlayedCards().stream()
-                            .filter(c -> c.getType() == CardType.RED).toList().size();
-                    break;
-                case "PHILOSOPHERS_GUILD":
-                    points = playerState.getLeftNeighbor().getPlayedCards().stream()
-                            .filter(c -> c.getType() == CardType.GREEN).toList().size() +
-                            playerState.getRightNeighbor().getPlayedCards().stream()
-                            .filter(c -> c.getType() == CardType.GREEN).toList().size();
-                    break;
-                case "SHIPOWNERS_GUILD":
-                    points = playerState.getPlayedCards().stream()
-                            .filter(c -> c.getType() == CardType.BROWN || c.getType() == CardType.GREY || c.getType() == CardType.VIOLET)
-                            .toList().size();
-                    break;
-                case "DECORATORS_GUILD":
-                    points = playerState.getWonderStage() == 3 ? 7 : 0;
-                    break;
-                case "BUILDERS_GUILD":
-                    points = playerState.getWonderStage() +
-                            playerState.getLeftNeighbor().getWonderStage() +
-                            playerState.getRightNeighbor().getWonderStage();
-                    break;
-                default:
-                    points = 0;
-                    break;
-            }
-            if (points > maxPoints) {
-                maxPoints = points;
-            }
-        }
     }
 
     /**

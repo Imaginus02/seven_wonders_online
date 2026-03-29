@@ -35,7 +35,7 @@ public class SpringSecurity {
                 .ignoringRequestMatchers("/h2-console/**")
             )
             .authorizeHttpRequests((auth) -> auth
-                .requestMatchers("/register", "/login", "/h2-console/**", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                .requestMatchers("/register", "/login", "/h2-console/**", "/css/**", "/js/**", "/images/**", "/assets/**", "/webjars/**").permitAll()
                 .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )

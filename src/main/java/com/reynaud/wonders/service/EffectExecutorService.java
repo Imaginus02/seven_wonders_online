@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class EffectExecutorService {
 
     private final EffectDAO effectDAO;
+    private final PlayerStateService playerStateService;
+    private final GameScoringService gameScoringService;
     private final LoggingService loggingService;
 
     // Resource enum order: STONE(0), WOOD(1), ORE(2), BRICK(3), GLASS(4), PAPER(5), TEXTILE(6), MUTABLE_BASE(7), MUTABLE_ADVANCED(8)
@@ -42,8 +44,10 @@ public class EffectExecutorService {
         Science.TABLET, Science.COMPASS, Science.GEAR, Science.MUTABLE
     };
 
-    public EffectExecutorService(EffectDAO effectDAO, LoggingService loggingService) {
+    public EffectExecutorService(EffectDAO effectDAO, PlayerStateService playerStateService, GameScoringService gameScoringService, LoggingService loggingService) {
         this.effectDAO = effectDAO;
+        this.playerStateService = playerStateService;
+        this.gameScoringService = gameScoringService;
         this.loggingService = loggingService;
     }
 
@@ -276,6 +280,57 @@ public class EffectExecutorService {
             case "BUILD_FROM_DISCARD":
                 // Mark that this player needs to select a card from discard
                 // The game will be paused after all end-of-turn effects are applied
+                return true;
+            case "WORKERS_GUILD":
+                playerStateService.addVictoryPoints(playerState,
+                        countCardsByType(playerState.getLeftNeighbor(), CardType.BROWN)
+                                + countCardsByType(playerState.getRightNeighbor(), CardType.BROWN));
+                return true;
+            case "CRAFTSMENS_GUILD":
+                playerStateService.addVictoryPoints(playerState,
+                        2 * (countCardsByType(playerState.getLeftNeighbor(), CardType.GREY)
+                                + countCardsByType(playerState.getRightNeighbor(), CardType.GREY)));
+                return true;
+            case "MAGISTRATES_GUILD":
+                playerStateService.addVictoryPoints(playerState,
+                        countCardsByType(playerState.getLeftNeighbor(), CardType.BLUE)
+                                + countCardsByType(playerState.getRightNeighbor(), CardType.BLUE));
+                return true;
+            case "TRADERS_GUILD":
+                playerStateService.addVictoryPoints(playerState,
+                        countCardsByType(playerState.getLeftNeighbor(), CardType.YELLOW)
+                                + countCardsByType(playerState.getRightNeighbor(), CardType.YELLOW));
+                return true;
+            case "SPIES_GUILD":
+                playerStateService.addVictoryPoints(playerState,
+                        countCardsByType(playerState.getLeftNeighbor(), CardType.RED)
+                                + countCardsByType(playerState.getRightNeighbor(), CardType.RED));
+                return true;
+            case "PHILOSOPHERS_GUILD":
+                playerStateService.addVictoryPoints(playerState,
+                        countCardsByType(playerState.getLeftNeighbor(), CardType.GREEN)
+                                + countCardsByType(playerState.getRightNeighbor(), CardType.GREEN));
+                return true;
+            case "SHIPOWNERS_GUILD":
+                playerStateService.addVictoryPoints(playerState,
+                        countCardsByType(playerState, CardType.BROWN)
+                                + countCardsByType(playerState, CardType.GREY)
+                                + countCardsByType(playerState, CardType.VIOLET));
+                return true;
+            case "DECORATORS_GUILD":
+                if (playerState.getWonder() != null
+                        && playerState.getWonderStage() >= playerState.getWonder().getNumberOfStages() - 1) {
+                    playerStateService.addVictoryPoints(playerState, 7);
+                }
+                return true;
+            case "BUILDERS_GUILD":
+                playerStateService.addVictoryPoints(playerState,
+                        playerStateService.getWonderStageOrZero(playerState)
+                                + playerStateService.getWonderStageOrZero(playerState.getLeftNeighbor())
+                                + playerStateService.getWonderStageOrZero(playerState.getRightNeighbor()));
+                return true;
+            case "COPY_VIOLET":
+                gameScoringService.applyBestCopiedGuild(playerState);
                 return true;
             default:
                 return false;

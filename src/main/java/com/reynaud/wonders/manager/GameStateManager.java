@@ -3,12 +3,20 @@ package com.reynaud.wonders.manager;
 import com.reynaud.wonders.dao.GameDAO;
 import com.reynaud.wonders.entity.GameEntity;
 import com.reynaud.wonders.entity.PlayerStateEntity;
+import com.reynaud.wonders.model.EffectTiming;
 import com.reynaud.wonders.model.GameStatus;
+import com.reynaud.wonders.service.EffectExecutorService;
+import com.reynaud.wonders.service.GameScoringService;
 import com.reynaud.wonders.service.LoggingService;
+import com.reynaud.wonders.service.PlayerStateService;
+
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 
 /**
  * Manager responsible for managing game state transitions.
@@ -22,10 +30,16 @@ import java.time.LocalDateTime;
 public class GameStateManager {
 
     private final GameDAO gameDAO;
+    private final PlayerStateService playerStateService;
+    private final EffectExecutorService effectExecutor;
+    private final GameScoringService gameScoringService;
     private final LoggingService loggingService;
 
-    public GameStateManager(GameDAO gameDAO, LoggingService loggingService) {
+    public GameStateManager(GameDAO gameDAO, PlayerStateService playerStateService, EffectExecutorService effectExecutor, GameScoringService gameScoringService, LoggingService loggingService) {
         this.gameDAO = gameDAO;
+        this.playerStateService = playerStateService;
+        this.effectExecutor = effectExecutor;
+        this.gameScoringService = gameScoringService;
         this.loggingService = loggingService;
     }
 
@@ -65,11 +79,27 @@ public class GameStateManager {
         game.setStatus(GameStatus.FINISHED);
         game.setFinishedAt(LocalDateTime.now());
 
-        // TODO: Implement the Olympia B stage 3 effect that allows you to copy one of your neighbors' violet cards for end game scoring, which may impact the winner
+        applyPendingEffects(game.getId(), EnumSet.of(EffectTiming.END_OF_GAME));
 
-        //TODO: Implement a proper calculate point function
         game.getPlayerStates().forEach(playerState -> {
+            loggingService.info("Calculating points for player - PlayerUsername: " + playerState.getUser().getUsername() + ", CurrentVP: " + playerState.getVictoryPoints(), "GameStateManager.finishGame");         
+            
             playerState.setVictoryPoints(playerState.getVictoryPoints() + playerState.getCoins() / 3);
+            
+            loggingService.info("Coins points added: " + playerState.getCoins() / 3, "GameStateManager.finishGame");
+
+            // Military points are calculated at the end of each age
+
+            // Wonder stage points are added when constructed
+
+            // Blue card points are added when constructed
+
+            // Yellow card points are added when constructed
+
+            int sciencePoints = gameScoringService.calculateSciencePoints(playerState.getScience());
+            playerState.setVictoryPoints(playerState.getVictoryPoints() + sciencePoints);
+            loggingService.info("Science points added: " + sciencePoints, "GameStateManager.finishGame");
+            
         });
         PlayerStateEntity winner = game.getPlayerStates().stream().max((p1, p2) -> p1.getVictoryPoints().compareTo(p2.getVictoryPoints())).orElseThrow();
         game.setWinner(winner.getUser());
@@ -99,5 +129,27 @@ public class GameStateManager {
         game.setStatus(GameStatus.WAITING);
         loggingService.info("Game set to WAITING state successfully - GameID: " + game.getId(), "GameStateManager.setGameToWaiting");
         return gameDAO.save(game);
+    }
+
+    private void applyPendingEffects(Long gameId, EnumSet<EffectTiming> timings) {
+        List<PlayerStateEntity> players = playerStateService.getPlayerStatesByGameId(gameId);
+
+        for (PlayerStateEntity ps : players) {
+            if (ps.getPendingEffects() == null || ps.getPendingEffects().isEmpty()) {
+                continue;
+            }
+
+            List<com.reynaud.wonders.entity.EffectEntity> toApply = new ArrayList<>(ps.getPendingEffects().stream()
+                    .filter(effect -> effect.getTiming() != null && timings.contains(effect.getTiming()))
+                    .toList());
+
+            for (com.reynaud.wonders.entity.EffectEntity effect : toApply) {
+                effectExecutor.applyEffect(ps, effect);
+                //TODO: Remove this ugly condition an handle it in a more generic way
+                if (effect.getEffectId() != "BABYLON_B_STAGE_2_PLAY_LAST_CARDS") {
+                    ps.removePendingEffect(effect);
+                }
+            }
+        }
     }
 }

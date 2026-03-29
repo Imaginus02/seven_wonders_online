@@ -72,6 +72,26 @@ public class PlayerStateService {
         playerStateDAO.deleteById(id);
     }
 
+    public void addVictoryPoints(PlayerStateEntity playerState, int victoryPoints) {
+        if (playerState == null || victoryPoints <= 0) {
+            return;
+        }
+
+        playerState.setVictoryPoints(playerState.getVictoryPoints() + victoryPoints);
+        loggingService.debug("Added victory points - PlayerStateID: " + playerState.getId()
+                + ", Username: " + playerState.getUser().getUsername()
+                + ", AddedVP: " + victoryPoints
+                + ", TotalVP: " + playerState.getVictoryPoints(), "PlayerStateService.addVictoryPoints");
+    }
+
+    public int getWonderStageOrZero(PlayerStateEntity playerState) {
+        if (playerState == null || playerState.getWonderStage() == null) {
+            return 0;
+        }
+
+        return playerState.getWonderStage();
+    }
+
     // Conversion methods
     public PlayerStateDTO convertToDTO(PlayerStateEntity entity) {
         if (entity == null) {
